@@ -1,0 +1,12 @@
+(executable
+ (public_name systemVerilog)
+ (modules systemVerilog)
+; (bisect_ppx)
+ (libraries
+   systemVerilog
+   cmdliner))
+
+;(install
+; (section bin)
+; (files
+;  (systemVerilog.exe as system-verilog)))

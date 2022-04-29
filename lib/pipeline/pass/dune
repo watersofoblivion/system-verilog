@@ -1,0 +1,9 @@
+(library
+ (name pass)
+ (modes native)
+ (instrumentation (backend bisect_ppx))
+ (libraries
+   parse
+   norm
+   elab
+   sim))

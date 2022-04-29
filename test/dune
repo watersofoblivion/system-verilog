@@ -1,0 +1,14 @@
+(test
+ (name runner)
+ (modes native)
+ (action
+   (run %{test}
+     -testdata-dir %{workspace_root}/../../test
+     -ci true
+     -shards 8
+     -display false
+     -chooser failfirst))
+ (libraries
+    ounit2
+    pipelineTest
+    toolchainTest))

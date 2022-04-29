@@ -1,0 +1,24 @@
+(menhir
+  (modules
+    common
+    token)
+  (merge_into parser)
+  (flags
+    --strict
+    --explain
+    --dump
+    --dump-resolved
+    --no-dollars
+    --table
+    --inspection))
+
+(library
+ (name parse)
+ (modes native)
+ (instrumentation (backend bisect_ppx))
+ (preprocess
+   (pps sedlex.ppx))
+ (libraries
+   sedlex
+   menhirLib
+   syntax))

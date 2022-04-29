@@ -1,0 +1,8 @@
+(library
+ (name pipelineTest)
+ (modes native)
+ (libraries
+    ounit2
+    pipeline
+    langTest
+    passTest))

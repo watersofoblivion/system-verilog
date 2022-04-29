@@ -1,0 +1,7 @@
+(library
+ (name toolchainTest)
+ (modes native)
+ (libraries
+    ounit2
+    toolchain
+    cliTest))

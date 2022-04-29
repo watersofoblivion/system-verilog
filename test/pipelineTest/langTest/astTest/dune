@@ -1,0 +1,6 @@
+(library
+ (name astTest)
+ (modes native)
+ (libraries
+    ounit2
+    ast))

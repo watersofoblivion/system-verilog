@@ -1,0 +1,4 @@
+(library
+ (name elab)
+ (modes native)
+ (instrumentation (backend bisect_ppx)))

@@ -1,0 +1,8 @@
+(library
+ (name langTest)
+ (modes native)
+ (libraries
+    ounit2
+    lang
+    syntaxTest
+    astTest))
