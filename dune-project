@@ -24,8 +24,12 @@
    ocaml
    dune
    menhir
+   llvm
+   (alt-ergo (>= 2.3.0))
    odoc
    cmdliner
+   ANSITerminal
+   logs
    ounit2
    bisect_ppx
    sedlex))

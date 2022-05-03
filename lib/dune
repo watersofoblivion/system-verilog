@@ -3,5 +3,5 @@
  (modes native)
  (instrumentation (backend bisect_ppx))
  (libraries
-   riscv
+   pipeline
    toolchain))

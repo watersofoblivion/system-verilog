@@ -12,8 +12,12 @@ depends: [
   "ocaml"
   "dune" {>= "3.1"}
   "menhir"
+  "llvm"
+  "alt-ergo"
   "odoc"
   "cmdliner"
+  "ANSITerminal"
+  "logs"
   "ounit2"
   "bisect_ppx"
   "sedlex"
