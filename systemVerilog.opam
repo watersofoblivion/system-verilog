@@ -13,7 +13,7 @@ depends: [
   "dune" {>= "3.1"}
   "menhir"
   "llvm"
-  "alt-ergo"
+  "alt-ergo" {= "2.2.0"}
   "odoc"
   "cmdliner"
   "ANSITerminal"

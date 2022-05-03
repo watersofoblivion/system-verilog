@@ -25,7 +25,7 @@
    dune
    menhir
    llvm
-   (alt-ergo (>= 2.3.0))
+   (alt-ergo (= 2.2.0))
    odoc
    cmdliner
    ANSITerminal
