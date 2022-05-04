@@ -6,7 +6,7 @@
    systemVerilog
    cmdliner))
 
-;(install
-; (section bin)
-; (files
-;  (systemVerilog.exe as system-verilog)))
+(install
+ (section bin)
+ (files
+  (systemVerilog.exe as system-verilog)))

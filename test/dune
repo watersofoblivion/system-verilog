@@ -10,5 +10,6 @@
      -chooser failfirst))
  (libraries
     ounit2
+    commonTest
     pipelineTest
     toolchainTest))

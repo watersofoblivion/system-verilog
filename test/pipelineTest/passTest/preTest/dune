@@ -1,0 +1,6 @@
+(library
+ (name preTest)
+ (modes native)
+ (libraries
+    ounit2
+    pre))

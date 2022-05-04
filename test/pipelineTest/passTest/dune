@@ -4,7 +4,9 @@
  (libraries
     ounit2
     pass
+    preTest
     parseTest
     normTest
     elabTest
-    simTest))
+    simTest
+    pnrTest))

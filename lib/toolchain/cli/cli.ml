@@ -19,4 +19,5 @@ let cmds =
     Esim.cmd;
     Csim.cmd;
     Prove.cmd;
+    Pnr.cmd;
   ]

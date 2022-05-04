@@ -2,3 +2,4 @@ _build
 .metals
 .docker
 _coverage
+*.coverage

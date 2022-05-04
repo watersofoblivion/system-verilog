@@ -1,0 +1,4 @@
+(library
+ (name evt)
+ (modes native)
+ (instrumentation (backend bisect_ppx)))

@@ -2,6 +2,7 @@ open OUnit2
 
 let suite =
   "System Verilog" >::: [
+    CommonTest.suite;
     PipelineTest.suite;
     ToolchainTest.suite;
   ]

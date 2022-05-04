@@ -1,0 +1,6 @@
+(library
+ (name cycTest)
+ (modes native)
+ (libraries
+    ounit2
+    cyc))

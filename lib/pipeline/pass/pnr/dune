@@ -1,0 +1,4 @@
+(library
+ (name pnr)
+ (modes native)
+ (instrumentation (backend bisect_ppx)))

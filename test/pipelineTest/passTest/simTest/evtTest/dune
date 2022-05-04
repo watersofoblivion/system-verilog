@@ -1,0 +1,6 @@
+(library
+ (name evtTest)
+ (modes native)
+ (libraries
+    ounit2
+    evt))

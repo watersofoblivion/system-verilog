@@ -3,7 +3,9 @@
  (modes native)
  (instrumentation (backend bisect_ppx))
  (libraries
+   pre
    parse
    norm
    elab
-   sim))
+   sim
+   pnr))

@@ -20,7 +20,11 @@ This documents the completeness of the implementation in terms of the specificat
 
 * Clause 1: Overview :white_check_mark:
 * Clause 2: Normative References :white_check_mark:
-* Clause 3: Design and Verification Building Blocks (TODO)
+* Clause 3: Design and Verification Building Blocks (In-Progress)
+  * Supports all files and individual files as compilation unit modes (3.12.1)
+  * (TODO) `$unit` scope (3.12.1)
+  * (TODO) Namespaces (3.13): Will implement as needed when implementing passes
+  * (TODO) `\`timescale` compiler directive (3.14.2.1)
 * Clause 4: Scheduling Semantics (TODO)
 * Clause 5: Lexical Conventions (TODO)
 * Clause 6: Data Types (TODO)
