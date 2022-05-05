@@ -1,7 +1,4 @@
 (library
  (name lang)
  (modes native)
- (instrumentation (backend bisect_ppx))
- (libraries
-   ast
-   syntax))
+ (instrumentation (backend bisect_ppx)))

@@ -3,8 +3,8 @@
  (modules systemVerilog)
 ; (bisect_ppx)
  (libraries
-   systemVerilog
-   cmdliner))
+   cmdliner
+   cli))
 
 (install
  (section bin)

@@ -36,11 +36,7 @@ let punct_eof = EOF
 (* Punctuation *)
 
 let punct_slash = PUNCT_SLASH
-
-(* Keywords *)
-
-let kwd_timeunit = KWD_TIMEUNIT
-let kwd_timeprecision = KWD_TIMEPRECISION
+let punct_backtick = PUNCT_BACKTICK
 
 (* Lexer *)
 
@@ -51,10 +47,7 @@ let lex lexbuf =
 
     (* Punctuation *)
     | "/" -> punct_slash
-
-    (* Keywords *)
-    | "timeunit"      -> kwd_timeunit
-    | "timeprecision" -> kwd_timeprecision
+    | "`" -> punct_backtick
 
     (* Fallthrough *)
     | _   -> failwith "Lex error"

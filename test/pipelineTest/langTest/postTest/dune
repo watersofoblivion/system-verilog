@@ -1,7 +1,6 @@
 (library
- (name preTest)
+ (name postTest)
  (modes native)
  (libraries
     ounit2
-    pre
-    postTest))
+    post))

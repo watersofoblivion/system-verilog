@@ -1,8 +1,10 @@
 (menhir
   (modules
     common
-    token)
+    tokens
+    file)
   (merge_into parser)
+  (infer false)
   (flags
     --strict
     --explain
@@ -21,4 +23,6 @@
  (libraries
    sedlex
    menhirLib
+   fpath
+   post
    syntax))

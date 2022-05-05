@@ -4,5 +4,7 @@
  (libraries
     ounit2
     lang
+    commTest
+    postTest
     syntaxTest
     astTest))

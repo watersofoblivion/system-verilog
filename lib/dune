@@ -1,7 +1,4 @@
 (library
  (name systemVerilog)
  (modes native)
- (instrumentation (backend bisect_ppx))
- (libraries
-   pipeline
-   toolchain))
+ (instrumentation (backend bisect_ppx)))

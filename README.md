@@ -43,7 +43,8 @@ This documents the completeness of the implementation in terms of the specificat
 * Clause 19: Functional Coverage (TODO)
 * Clause 20: Utility System Tasks and System Functions (TODO)
 * Clause 21: Input/Output System Tasks and System Functions (TODO)
-* Clause 22: Compiler Directives (TODO)
+* Clause 22: Compiler Directives (In-Progress)
+  * 
 
 ### Part 2: Hierarchy Constructs
 

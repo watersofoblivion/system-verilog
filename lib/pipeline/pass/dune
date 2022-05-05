@@ -1,11 +1,4 @@
 (library
  (name pass)
  (modes native)
- (instrumentation (backend bisect_ppx))
- (libraries
-   pre
-   parse
-   norm
-   elab
-   sim
-   pnr))
+ (instrumentation (backend bisect_ppx)))

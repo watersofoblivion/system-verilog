@@ -14,6 +14,7 @@ let cmds =
   let info = Cmd.info "system-verilog" ~doc ~sdocs ~exits:Common.exits ~man in
   Cmd.group ~default:Help.term info [
     Help.cmd;
+    Doc.cmd;
     Check.cmd;
     Elaborate.cmd;
     Esim.cmd;

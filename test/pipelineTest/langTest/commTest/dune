@@ -1,7 +1,6 @@
 (library
- (name preTest)
+ (name commTest)
  (modes native)
  (libraries
     ounit2
-    pre
-    postTest))
+    comm))

@@ -1,7 +1,4 @@
 (library
  (name pipeline)
  (modes native)
- (instrumentation (backend bisect_ppx))
- (libraries
-   lang
-   pass))
+ (instrumentation (backend bisect_ppx)))
