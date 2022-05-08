@@ -61,7 +61,8 @@ let dir_cell_define ?loc:(loc = LocTest.gen ()) _ =
 let dir_end_cell_define ?loc:(loc = LocTest.gen ()) _ =
   Post.dir_end_cell_define loc
 
-let dir_pragma _ = failwith "TODO"
+let dir_pragma ?loc:(loc = LocTest.gen ()) ?exprs:(exprs = []) _ =
+  Post.dir_pragma loc exprs
 
 let dir_line ?loc:(loc = LocTest.gen ()) ?number:(number = 0) ?path:(path = Result.get_ok (Fpath.of_string "path/to/original/source")) ?level:(level = None) _ =
   Post.dir_line loc number path level
@@ -140,7 +141,7 @@ let rec assert_dir_equal ~ctxt expected actual = match expected, actual with
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc
   | Post.DirPragma expected, Post.DirPragma actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    failwith "TODO"
+    List.iter2 (PragmaTest.assert_pragma_expr_equal ~ctxt) expected.exprs actual.exprs
   | Post.DirLine expected, Post.DirLine actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
     assert_equal ~ctxt ~printer:string_of_int ~msg:"Line numbers are not equal" expected.number actual.number;
@@ -334,7 +335,17 @@ let test_dir_end_cell_define ctxt =
     | Post.DirEndCellDefine actual -> LocTest.assert_loc_equal ~ctxt loc actual.loc
     | actual -> fail_dir_expected "end cell modules" actual
 
-let test_dir_pragma _ = failwith "TODO"
+let test_dir_pragma ctxt =
+  let loc = LocTest.gen () in
+  let exprs = [
+    PragmaTest.pragma_expr ();
+    PragmaTest.pragma_expr ();
+  ] in
+  match Post.dir_pragma loc exprs with
+    | Post.DirPragma actual ->
+      LocTest.assert_loc_equal ~ctxt loc actual.loc;
+      List.iter2 (PragmaTest.assert_pragma_expr_equal ~ctxt) exprs actual.exprs
+    | actual -> fail_dir_expected "pragma" actual
 
 let test_dir_line ctxt =
   let loc = LocTest.gen () in
@@ -673,7 +684,26 @@ let test_pp_dir_end_cell_define ctxt =
     |> dir_end_cell_define
     |> assert_pp_dir ~ctxt ["`endcelldefine"]
 
-let test_pp_dir_pragma _ = failwith "TODO"
+let test_pp_dir_pragma ctxt =
+  let expr =
+    let kwd = NameTest.name ~name:"first" () in
+    let value = PragmaTest.pragma_value_string ~value:(ValueTest.value ~value:"first-value" ()) () in
+    PragmaTest.pragma_expr ~kwd:(Some kwd) ~value:(Some value) ()
+  in
+  let expr' =
+    let kwd = NameTest.name ~name:"second" () in
+    let value = PragmaTest.pragma_value_string ~value:(ValueTest.value ~value:"second-value" ()) () in
+    PragmaTest.pragma_expr ~kwd:(Some kwd) ~value:(Some value) ()
+  in
+  let exprs = [expr; expr'] in
+  ()
+    |> dir_pragma ~exprs
+    |> assert_pp_dir ~ctxt [
+         fprintf str_formatter "`pragma %t, %t"
+           (Post.pp_pragma_expr expr)
+           (Post.pp_pragma_expr expr')
+           |> flush_str_formatter
+       ]
 
 let test_pp_dir_line ctxt =
   let number = 42 in

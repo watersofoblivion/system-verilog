@@ -111,6 +111,33 @@ type drive = private
     }
 (** How to drive unconnected ports *)
 
+type pragma_value = private
+  | PragmaValueExprs of {
+      loc:   Loc.t;            (** Source location *)
+      exprs: pragma_expr list; (** Expressions *)
+    } (** A list of expressions *)
+  | PragmaValueNum of {
+      loc:   Loc.t; (** Source location *)
+      value: value; (** Value *)
+    } (** A numeric value *)
+  | PragmaValueString of {
+      loc:   Loc.t; (** Source location *)
+      value: value; (** Value *)
+    } (** A string value *)
+  | PragmaValueIdent of {
+      loc:  Loc.t; (** Source location *)
+      name: name;  (** Name *)
+    } (** An identifier value *)
+(** Pragma values *)
+
+and pragma_expr = private
+  | PragmaExpr of {
+      loc:   Loc.t;               (** Source location *)
+      kwd:   name option;         (** Keyword *)
+      value: pragma_value option; (** Value *)
+    } (** Pragma expression *)
+(** Pragma Expressions *)
+
 type level = private
   | LevelEntered of {
       loc: Loc.t; (** Source location *)
@@ -194,10 +221,9 @@ type dir = private
       loc: Loc.t; (** Source location *)
     } (** Stop tagging modules as cell modules *)
   | DirPragma of {
-      loc:   Loc.t;                                (** Source location *)
-      name:  name;                                (** The name of the pragma *)
-      exprs: (string option * string option) list; (** The pragma expressions *)
-    } (** Pragmas *)
+      loc:   Loc.t;            (** Source location *)
+      exprs: pragma_expr list; (** Expressions *)
+    } (** Pragma *)
   | DirLine of {
       loc:    Loc.t;        (** Source location *)
       number: int;          (** Line number *)
@@ -339,6 +365,32 @@ val drive_up : Loc.t -> drive
 val drive_down : Loc.t -> drive
 (** [drive_down loc] constructs a pull down drive at location [loc]. *)
 
+(** {3 Pragmas} *)
+
+(** {4 Pragma Values} *)
+
+val pragma_value_exprs : Loc.t -> pragma_expr list -> pragma_value
+(** [pragma_value_exprs loc exprs] constructs a pragma expressions value at
+    location [loc] with the value of [exprs]. *)
+
+val pragma_value_num : Loc.t -> value -> pragma_value
+(** [pragma_value_num loc value] constructs a pragma number value at location
+    [loc] with the value [value]. *)
+
+val pragma_value_string : Loc.t -> value -> pragma_value
+(** [pragma_value_string loc value] constructs a pragma string value at location
+    [loc] with the value [value]. *)
+
+val pragma_value_ident : Loc.t -> name -> pragma_value
+(** [pragma_value_ident loc name] constructs a pragma identifier value at
+    location [loc] referencing the identier [name]. *)
+
+(** {4 Pragma Expressions} *)
+
+val pragma_expr : Loc.t -> name option -> pragma_value option -> pragma_expr
+(** [pragma_expr loc kwd value] constrcuts a pragma expression at location [loc]
+    with the keyword [kwd] and the value [value]. *)
+
 (** {3 Line Levels} *)
 
 val level_entered : Loc.t -> level
@@ -427,8 +479,9 @@ val dir_end_cell_define : Loc.t -> dir
 (** [dir_end_cell_define loc] constructs an end cell define directive at
     location [loc] that stops taging subsequent modules as cell modules. *)
 
-val dir_pragma : Loc.t -> unit -> unit -> dir
-(* TODO *)
+val dir_pragma : Loc.t -> pragma_expr list -> dir
+(** [dir_pragma loc exprs] constructs a pragma directive at location [loc] with
+    the pragma expressions [exprs]. *)
 
 val dir_line : Loc.t -> int -> Fpath.t -> level option -> dir
 (** [dir_line number loc path level] constructs a line directive at location
@@ -501,7 +554,15 @@ val pp_net : net option -> formatter -> unit
 (** [pp_net net fmt] pretty-prints the net type [net] to the formatter [fmt]. *)
 
 val pp_drive : drive -> formatter -> unit
-(** [pp_drive drive fmt] pretty-prints the dreive direction [drive] to the
+(** [pp_drive drive fmt] pretty-prints the drive direction [drive] to the
+    formatter [fmt]. *)
+
+val pp_pragma_value : pragma_value -> formatter -> unit
+(** [pp_pragma_value value fmt] pretty-prints the pragma value [value] to the
+    formatter [fmt]. *)
+
+val pp_pragma_expr : pragma_expr -> formatter -> unit
+(** [pp_pragma_expr expr fmt] pretty-prints the pragma expression [expr] to the
     formatter [fmt]. *)
 
 val pp_level : level option -> formatter -> unit

@@ -192,6 +192,10 @@ val dir_end_cell_define : ?loc:Loc.t -> unit -> Post.dir
 (** [dir_no_cell_define ?loc ()] constructs an end cell module directive at
     location [loc]. *)
 
+val dir_pragma : ?loc:Loc.t -> ?exprs:Post.pragma_expr list -> unit -> Post.dir
+(** [dir_pragma ?loc ?exprs ()] constructs a pragma directive a location [loc]
+    with the expressions [exprs]. *)
+
 val dir_line : ?loc:Loc.t -> ?number:int -> ?path:Fpath.t -> ?level:Post.level option -> unit -> Post.dir
 (** [dir_line ?loc ?number ?path ?level ()] constructs a line level directive at
     location [loc] with line [number] in the file [path] with level [level]. *)
@@ -253,6 +257,14 @@ val assert_net_equal : ctxt:test_ctxt -> Post.net -> Post.net -> unit
 val assert_drive_equal : ctxt:test_ctxt -> Post.drive -> Post.drive -> unit
 (** [assert_drive_equal ~ctxt expected actual] asserts that the drive type
     [actual] is equal to the drive type [expected]. *)
+
+val assert_pragma_value_equal : ctxt:test_ctxt -> Post.pragma_value -> Post.pragma_value -> unit
+(** [assert_pragma_value_equal ~ctxt expected actual] asserts that the pragma
+    value [actual] is equal to the pragma value [expected]. *)
+
+val assert_pragma_expr_equal : ctxt:test_ctxt -> Post.pragma_expr -> Post.pragma_expr -> unit
+(** [assert_pragma_expr_equal ~ctxt expected actual] asserts that the pragma
+    expression [actual] is equal to the pragma expression [expected]. *)
 
 val assert_level_equal : ctxt:test_ctxt -> Post.level -> Post.level -> unit
 (** [assert_level_equal ~ctxt expected actual] asserts that the line level

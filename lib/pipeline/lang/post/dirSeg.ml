@@ -22,7 +22,7 @@ type dir =
   | DirNoUnconnectedDrive of { loc: Loc.t }
   | DirCellDefine of { loc: Loc.t }
   | DirEndCellDefine of { loc: Loc.t }
-  | DirPragma of { loc: Loc.t; name: Name.name; exprs: (string option * string option) list }
+  | DirPragma of { loc: Loc.t; exprs: Pragma.pragma_expr list }
   | DirLine of { loc: Loc.t; number: int; path: Fpath.t; level: Level.level option }
   | DirFILE of { loc: Loc.t }
   | DirLINE of { loc: Loc.t }
@@ -49,7 +49,7 @@ let dir_unconnected_drive loc drive = DirUnconnectedDrive { loc; drive }
 let dir_no_unconnected_drive loc = DirNoUnconnectedDrive { loc }
 let dir_cell_define loc = DirCellDefine { loc }
 let dir_end_cell_define loc = DirEndCellDefine { loc }
-let dir_pragma _ _ _ = failwith "TODO"
+let dir_pragma loc exprs = DirPragma { loc; exprs }
 let dir_line loc number path level = DirLine { loc; number; path; level }
 let dir_FILE loc = DirFILE { loc }
 let dir_LINE loc = DirLINE { loc }
@@ -83,13 +83,17 @@ let rec pp_dir = function
   | DirNoUnconnectedDrive _ -> dprintf "`no_unconnected_drive"
   | DirCellDefine _ -> dprintf "`celldefine"
   | DirEndCellDefine _ -> dprintf "`endcelldefine"
-  | DirPragma _ -> failwith "TODO"
+  | DirPragma dir ->
+    let pp fmt v = Pragma.pp_pragma_expr v fmt in
+    let pp_sep fmt _ = fprintf fmt ", " in
+    dprintf "`pragma %a"
+      (pp_print_list ~pp_sep pp) dir.exprs
   | DirLine dir -> dprintf "`line %d %S %t" dir.number (Fpath.to_string dir.path) (Level.pp_level dir.level)
   | DirFILE _ -> dprintf "`__FILE__"
   | DirLINE _ -> dprintf "`__LINE__"
   | DirBeginKeywords dir -> dprintf "`begin_keywords %t" (Keywords.pp_keywords dir.keywords)
   | DirEndKeywords _ -> dprintf "`end_keywords"
-  
+
 and pp_seg = function
   | SegSource seg -> dprintf "%s" seg.src
   | SegDirective seg -> dprintf "%t" (pp_dir seg.dir)

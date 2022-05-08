@@ -6,6 +6,7 @@ include ParamTest
 include TimescaleTest
 include NetTest
 include DriveTest
+include PragmaTest
 include LevelTest
 include KeywordsTest
 include DirSegTest
@@ -19,6 +20,7 @@ let suite =
       TimescaleTest.constr;
       NetTest.constr;
       DriveTest.constr;
+      PragmaTest.constr;
       LevelTest.constr;
       KeywordsTest.constr;
       DirSegTest.constr_dir;
@@ -33,6 +35,7 @@ let suite =
       TimescaleTest.pp;
       NetTest.pp;
       DriveTest.pp;
+      PragmaTest.pp;
       LevelTest.pp;
       KeywordsTest.pp;
       DirSegTest.pp_dir;
