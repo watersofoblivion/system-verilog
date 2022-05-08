@@ -25,4 +25,5 @@
    menhirLib
    fpath
    post
+   common
    syntax))

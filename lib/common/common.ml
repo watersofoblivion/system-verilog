@@ -1,3 +1,3 @@
-module Timescale = struct
-  include Timescale
+module Loc = struct
+  include Loc
 end

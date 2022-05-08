@@ -2,5 +2,7 @@
  (name postTest)
  (modes native)
  (libraries
+    fpath
     ounit2
-    post))
+    post
+    commonTest))

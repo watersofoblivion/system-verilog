@@ -24,4 +24,5 @@
    sedlex
    menhirLib
    fpath
+   common
    post))

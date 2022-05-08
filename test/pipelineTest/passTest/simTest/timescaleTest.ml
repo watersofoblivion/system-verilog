@@ -2,9 +2,19 @@
 
 open Format
 
+open Sim
+
 open OUnit2
 
-open Common
+open CommonTest
+
+(* Helpers *)
+
+let printer pp x =
+  x
+    |> pp
+    |> fprintf str_formatter "%t"
+    |> flush_str_formatter
 
 (* Fixtures *)
 
@@ -48,12 +58,6 @@ let ts =
 
 let not_equal _ _ = false
 
-let printer pp x =
-  x
-    |> pp
-    |> fprintf str_formatter "%t"
-    |> flush_str_formatter
-
 let m_printer = printer Timescale.pp_m
 let u_printer = printer Timescale.pp_u
 
@@ -81,13 +85,6 @@ let assert_s_equal ~ctxt expected actual =
 let assert_t_equal ~ctxt expected actual =
   assert_s_equal ~ctxt expected.Timescale.time_unit actual.Timescale.time_unit;
   assert_s_equal ~ctxt expected.time_precision actual.time_precision
-
-let assert_pp ~ctxt pp lines x =
-  let expected = String.concat "\n" lines in
-  let print = printer pp in
-  x
-    |> print
-    |> assert_equal ~ctxt ~msg:"Pretty-printing output does not match" expected
 
 let assert_pp_m = assert_pp Timescale.pp_m
 let assert_pp_u = assert_pp Timescale.pp_u

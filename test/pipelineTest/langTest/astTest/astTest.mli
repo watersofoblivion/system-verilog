@@ -6,3 +6,7 @@ open OUnit2
 
 val suite : test
 (** [suite] is the unit test suite. *)
+
+(** {2 Fixtures} *)
+
+(** {2 Assertions} *)

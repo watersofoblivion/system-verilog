@@ -2,17 +2,19 @@
 
 open Format
 
-type level =
-  | Entered
-  | Exited
+open Common
 
-let level_entered = Entered
-let level_exited = Exited
+type level =
+  | LevelEntered of { loc: Loc.t }
+  | LevelExited of { loc: Loc.t }
+
+let level_entered loc = LevelEntered { loc }
+let level_exited loc = LevelExited { loc }
 
 let pp_level level =
   let level = match level with
-    | Some Entered -> 1
-    | Some Exited -> 2
+    | Some (LevelEntered _) -> 1
+    | Some (LevelExited _) -> 2
     | None -> 0
   in
   dprintf "%d" level

@@ -2,41 +2,43 @@
 
 open Format
 
-type net =
-  | Wire
-  | Tri
-  | Tri0
-  | Tri1
-  | WAnd
-  | TriAnd
-  | WOr
-  | TriOr
-  | TriReg
-  | UWire
+open Common
 
-let net_wire = Wire
-let net_tri = Tri
-let net_tri0 = Tri0
-let net_tri1 = Tri1
-let net_w_and = WAnd
-let net_tri_and = TriAnd
-let net_w_or = WOr
-let net_tri_or = TriOr
-let net_tri_reg = TriReg
-let net_u_wire = UWire
+type net =
+  | NetWire of { loc: Loc.t }
+  | NetTri of { loc: Loc.t }
+  | NetTri0 of { loc: Loc.t }
+  | NetTri1 of { loc: Loc.t }
+  | NetWAnd of { loc: Loc.t }
+  | NetTriAnd of { loc: Loc.t }
+  | NetWOr of { loc: Loc.t }
+  | NetTriOr of { loc: Loc.t }
+  | NetTriReg of { loc: Loc.t }
+  | NetUWire of { loc: Loc.t }
+
+let net_wire loc = NetWire { loc }
+let net_tri loc = NetTri { loc }
+let net_tri0 loc = NetTri0 { loc }
+let net_tri1 loc = NetTri1 { loc }
+let net_w_and loc = NetWAnd { loc }
+let net_tri_and loc = NetTriAnd { loc }
+let net_w_or loc = NetWOr { loc }
+let net_tri_or loc = NetTriOr { loc }
+let net_tri_reg loc = NetTriReg { loc }
+let net_u_wire loc = NetUWire { loc }
 
 let pp_net net =
   let net = match net with
-    | Some Wire -> "wire"
-    | Some Tri -> "tri"
-    | Some Tri0 -> "tri0"
-    | Some Tri1 -> "tri1"
-    | Some WAnd -> "wand"
-    | Some TriAnd -> "triand"
-    | Some WOr -> "wor"
-    | Some TriOr -> "trior"
-    | Some TriReg -> "trireg"
-    | Some UWire -> "uwire"
+    | Some (NetWire _) -> "wire"
+    | Some (NetTri _) -> "tri"
+    | Some (NetTri0 _) -> "tri0"
+    | Some (NetTri1 _) -> "tri1"
+    | Some (NetWAnd _) -> "wand"
+    | Some (NetTriAnd _) -> "triand"
+    | Some (NetWOr _) -> "wor"
+    | Some (NetTriOr _) -> "trior"
+    | Some (NetTriReg _) -> "trireg"
+    | Some (NetUWire _) -> "uwire"
     | None -> "none"
   in
   dprintf "%s" net

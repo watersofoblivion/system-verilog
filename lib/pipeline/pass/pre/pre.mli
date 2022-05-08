@@ -25,10 +25,10 @@ val empty : env
  * {2 Entry Points}
  *)
 
-(* val file : Fpath.t -> env -> (env -> Syntax.file -> 'a) -> 'a *)
-(** [file path env kontinue] parses the file located at path [path] in the
-    environment [env] and passes an environment and the parsed file to the
-    continuation [kontinue]. *)
+val compilation_unit : Fpath.t -> env -> (env -> Post.t -> 'a) -> 'a
+(** [compilation_unit path env kontinue] parses the file located at path [path]
+    in the environment [env] and passes an environment and the parsed file to
+    the continuation [kontinue]. *)
 
 (**
  * {2 Unit Test Entry Points}

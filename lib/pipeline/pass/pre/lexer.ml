@@ -40,7 +40,7 @@ let punct_backtick = PUNCT_BACKTICK
 
 (* Lexer *)
 
-let lex lexbuf =
+let lex_main lexbuf =
   match%sedlex lexbuf with
     (* Non-printable *)
     | eof -> punct_eof

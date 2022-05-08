@@ -44,7 +44,7 @@ let kwd_timeprecision = KWD_TIMEPRECISION
 
 (* Lexer *)
 
-let lex lexbuf =
+let lex_main lexbuf =
   match%sedlex lexbuf with
     (* Non-printable *)
     | eof -> punct_eof

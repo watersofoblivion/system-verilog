@@ -2,7 +2,9 @@
  (name simTest)
  (modes native)
  (libraries
-    ounit2
+    common
     sim
+    ounit2
+    commonTest
     evtTest
     cycTest))
