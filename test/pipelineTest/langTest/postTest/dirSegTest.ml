@@ -73,7 +73,7 @@ let dir_FILE ?loc:(loc = LocTest.gen ()) _ =
 let dir_LINE ?loc:(loc = LocTest.gen ()) _ =
   Post.dir_LINE loc
 
-let dir_begin_keywords ?loc:(loc = LocTest.gen ()) ?keywords:(keywords = KeywordsTest.keywords_ieee_1800_2012 ()) _ =
+let dir_begin_keywords ?loc:(loc = LocTest.gen ()) ?keywords:(keywords = KeywordsTest.keywords_1800_2012 ()) _ =
   Post.dir_begin_keywords loc keywords
 
 let dir_end_keywords ?loc:(loc = LocTest.gen ()) _ =
@@ -378,7 +378,7 @@ let test_dir_LINE ctxt =
 
 let test_dir_begin_keywords ctxt =
   let loc = LocTest.gen () in
-  let keywords = KeywordsTest.keywords_ieee_1800_2012 () in
+  let keywords = KeywordsTest.keywords_1800_2012 () in
   match Post.dir_begin_keywords loc keywords with
     | Post.DirBeginKeywords actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
@@ -730,7 +730,7 @@ let test_pp_dir_LINE ctxt =
     |> assert_pp_dir ~ctxt ["`__LINE__"]
 
 let test_pp_dir_begin_keywords ctxt =
-  let keywords = KeywordsTest.keywords_ieee_1800_2012 () in
+  let keywords = KeywordsTest.keywords_1800_2012 () in
   ()
     |> dir_begin_keywords ~keywords
     |> assert_pp_dir ~ctxt [

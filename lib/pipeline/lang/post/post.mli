@@ -148,7 +148,25 @@ type level = private
 (** Line Level *)
 
 type keywords = private
-  | KeywordsIeee1800_2012 of {
+  | Keywords1364_1995 of {
+      loc: Loc.t; (** Source location *)
+    } (** IEEE 1364-2005 *)
+  | Keywords1364_2001_NoConfig of {
+      loc: Loc.t; (** Source location *)
+    } (** IEEE 1364-2005-noconfig *)
+  | Keywords1364_2001 of {
+      loc: Loc.t; (** Source location *)
+    } (** IEEE 1364-2005 *)
+  | Keywords1364_2005 of {
+      loc: Loc.t; (** Source location *)
+    } (** IEEE 1364-2005 *)
+  | Keywords1800_2005 of {
+      loc: Loc.t; (** Source location *)
+    } (** IEEE 1800-2005 *)
+  | Keywords1800_2009 of {
+      loc: Loc.t; (** Source location *)
+    } (** IEEE 1800-2009 *)
+  | Keywords1800_2012 of {
       loc: Loc.t; (** Source location *)
     } (** IEEE 1800-2012 *)
 (** Supported sets of keywords *)
@@ -401,9 +419,33 @@ val level_exited : Loc.t -> level
 
 (** {3 Keywords} *)
 
-val keywords_ieee_1800_2012 : Loc.t -> keywords
-(** [keywords_ieee_1800_2012 loc] constructs the keyword set for IEEE 1800-2012
-    at location [loc]. *)
+val keywords_1364_1995 : Loc.t -> keywords
+(** [keywords_1364_1995 loc] constructs the keyword set for IEEE 1364-1995 at
+    location [loc]. *)
+
+val keywords_1364_2001_noconfig : Loc.t -> keywords
+(** [keywords_1364_2001_noconfig loc] constructs the keyword set for IEEE
+    1364-2001-noconfig at location [loc]. *)
+
+val keywords_1364_2001 : Loc.t -> keywords
+(** [keywords_1364_2001 loc] constructs the keyword set for IEEE 1364-2001 at
+    location [loc]. *)
+
+val keywords_1364_2005 : Loc.t -> keywords
+(** [keywords_1364_2005 loc] constructs the keyword set for IEEE 1364-2005 at
+    location [loc]. *)
+
+val keywords_1800_2005 : Loc.t -> keywords
+(** [keywords_1800_2005 loc] constructs the keyword set for IEEE 1800-2005 at
+    location [loc]. *)
+
+val keywords_1800_2009 : Loc.t -> keywords
+(** [keywords_1800_2009 loc] constructs the keyword set for IEEE 1800-2009 at
+    location [loc]. *)
+
+val keywords_1800_2012 : Loc.t -> keywords
+(** [keywords_1800_2012 loc] constructs the keyword set for IEEE 1800-2012 at
+    location [loc]. *)
 
 (** {3 Directives} *)
 

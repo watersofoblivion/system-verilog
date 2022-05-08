@@ -117,8 +117,32 @@ val level_exited : ?loc:Loc.t -> unit -> Post.level
 
 (** {3 Keywords} *)
 
-val keywords_ieee_1800_2012 : ?loc:Loc.t -> unit -> Post.keywords
-(** [keywords_ieee_1800_2012 ?loc ()] constructs the IEEE 1800-2012 keywords at
+val keywords_1364_1995 : ?loc:Loc.t -> unit -> Post.keywords
+(** [keywords_1364_1995 ?loc ()] constructs the IEEE 1364-1995 keywords at
+    location [loc]. *)
+
+val keywords_1364_2001_noconfig : ?loc:Loc.t -> unit -> Post.keywords
+(** [keywords_1364_2001_noconfig ?loc ()] constructs the IEEE 1364-2001-noconfig
+    keywords at location [loc]. *)
+
+val keywords_1364_2001 : ?loc:Loc.t -> unit -> Post.keywords
+(** [keywords_1364_2001 ?loc ()] constructs the IEEE 1364-2001 keywords at
+    location [loc]. *)
+
+val keywords_1364_2005 : ?loc:Loc.t -> unit -> Post.keywords
+(** [keywords_1364_2005 ?loc ()] constructs the IEEE 1364-2005 keywords at
+    location [loc]. *)
+
+val keywords_1800_2005 : ?loc:Loc.t -> unit -> Post.keywords
+(** [keywords_1800_2005 ?loc ()] constructs the IEEE 1800-2005 keywords at
+    location [loc]. *)
+
+val keywords_1800_2009 : ?loc:Loc.t -> unit -> Post.keywords
+(** [keywords_1800_2009 ?loc ()] constructs the IEEE 1800-2009 keywords at
+    location [loc]. *)
+
+val keywords_1800_2012 : ?loc:Loc.t -> unit -> Post.keywords
+(** [keywords_1800_2012 ?loc ()] constructs the IEEE 1800-2012 keywords at
     location [loc]. *)
 
 (** {3 Directives} *)
