@@ -4,9 +4,13 @@ open Format
 
 open Common
 
-type dir =
+
+type incl =
+  | IncludePath of { loc: Loc.t; sys: bool; path: Value.value }
+  | IncludeMacro of { loc: Loc.t; name: Name.name; args: args option }
+and dir =
   | DirResetAll of { loc: Loc.t }
-  | DirInclude of { loc: Loc.t; sys: bool; path: Fpath.t }
+  | DirInclude of { loc: Loc.t; src: incl }
   | DirDefine of { loc: Loc.t; name: Name.name; params: Macro.params option; body: Macro.body option }
   | DirUndef of { loc: Loc.t; name: Name.name }
   | DirUndefineAll of { loc: Loc.t }
@@ -23,7 +27,7 @@ type dir =
   | DirCellDefine of { loc: Loc.t }
   | DirEndCellDefine of { loc: Loc.t }
   | DirPragma of { loc: Loc.t; exprs: Pragma.pragma_expr list }
-  | DirLine of { loc: Loc.t; number: int; path: Fpath.t; level: Level.level option }
+  | DirLine of { loc: Loc.t; number: int; path: Value.value; level: Level.level option }
   | DirFILE of { loc: Loc.t }
   | DirLINE of { loc: Loc.t }
   | DirBeginKeywords of { loc: Loc.t; keywords: Keywords.keywords }
@@ -34,8 +38,11 @@ and seg =
   | SegSource of { loc: Loc.t; src: string }
   | SegDirective of { loc: Loc.t; dir: dir }
 
+let incl_path loc sys path = IncludePath { loc; sys; path }
+let incl_macro loc name args = IncludeMacro { loc; name; args }
+
 let dir_reset_all loc = DirResetAll { loc }
-let dir_include loc sys path = DirInclude { loc; sys; path }
+let dir_include loc src = DirInclude { loc; src }
 let dir_define loc name params body = DirDefine { loc; name; params; body }
 let dir_undef loc name = DirUndef { loc; name }
 let dir_undefine_all loc = DirUndefineAll { loc }
@@ -63,13 +70,20 @@ let args loc args = Args { loc; args }
 let seg_source loc src = SegSource { loc; src }
 let seg_directive loc dir = SegDirective { loc; dir }
 
-let rec pp_dir = function
+let rec pp_incl = function
+  | IncludePath incl ->
+    if incl.sys
+    then dprintf "<%t>" (Value.pp_value incl.path)
+    else dprintf "\"%t\"" (Value.pp_value incl.path)
+  | IncludeMacro incl ->
+    let pp fmt args = fprintf fmt "(%t)" (pp_args args) in
+    dprintf "`%t%a"
+      (Name.pp_name incl.name)
+      (pp_print_option pp) incl.args
+
+and pp_dir = function
   | DirResetAll _ -> dprintf "`resetall"
-  | DirInclude dir ->
-    let path = Fpath.to_string dir.path in
-    if dir.sys
-    then dprintf "`include <%s>" path
-    else dprintf "`include %S" path
+  | DirInclude dir -> dprintf "`include %t" (pp_incl dir.src)
   | DirDefine dir ->
     let pp_params fmt params = fprintf fmt "(%t)" (Macro.pp_params params) in
     let pp_body fmt body = fprintf fmt " %t" (Macro.pp_body body) in
@@ -102,7 +116,7 @@ let rec pp_dir = function
     let pp_sep fmt _ = fprintf fmt ", " in
     dprintf "`pragma %a"
       (pp_print_list ~pp_sep pp) dir.exprs
-  | DirLine dir -> dprintf "`line %d %S %t" dir.number (Fpath.to_string dir.path) (Level.pp_level dir.level)
+  | DirLine dir -> dprintf "`line %d \"%t\" %t" dir.number (Value.pp_value dir.path) (Level.pp_level dir.level)
   | DirFILE _ -> dprintf "`__FILE__"
   | DirLINE _ -> dprintf "`__LINE__"
   | DirBeginKeywords dir -> dprintf "`begin_keywords %t" (Keywords.pp_keywords dir.keywords)

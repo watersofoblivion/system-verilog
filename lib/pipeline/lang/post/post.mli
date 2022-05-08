@@ -182,13 +182,13 @@ type level = private
 type keywords = private
   | Keywords1364_1995 of {
       loc: Loc.t; (** Source location *)
-    } (** IEEE 1364-2005 *)
+    } (** IEEE 1364-1995 *)
   | Keywords1364_2001_NoConfig of {
       loc: Loc.t; (** Source location *)
-    } (** IEEE 1364-2005-noconfig *)
+    } (** IEEE 1364-2001-noconfig *)
   | Keywords1364_2001 of {
       loc: Loc.t; (** Source location *)
-    } (** IEEE 1364-2005 *)
+    } (** IEEE 1364-2001 *)
   | Keywords1364_2005 of {
       loc: Loc.t; (** Source location *)
     } (** IEEE 1364-2005 *)
@@ -203,14 +203,26 @@ type keywords = private
     } (** IEEE 1800-2012 *)
 (** Supported sets of keywords *)
 
-type dir = private
+type incl = private
+  | IncludePath of {
+      loc:  Loc.t; (** Source location *)
+      sys:  bool;  (** Whether to only search the system paths *)
+      path: value; (** Path to import *)
+    } (** A path *)
+  | IncludeMacro of {
+      loc:  Loc.t;       (** Source location *)
+      name: name;        (** Macro name *)
+      args: args option; (** Macro arguments *)
+    } (** A macro value *)
+(** Include values *)
+
+and dir = private
   | DirResetAll of {
       loc: Loc.t; (** Source location *)
     } (** Reset all directives *)
   | DirInclude of {
-      loc:  Loc.t;   (** Source location *)
-      sys:  bool;    (** Whether this is a system-defined include file.  (I.e., [<...>] syntax was used.) *)
-      path: Fpath.t; (** The path to the file *)
+      loc: Loc.t; (** Source location *)
+      src: incl;  (** The source to include *)
     } (** Include a source file *)
   | DirDefine of {
       loc:    Loc.t;         (** Source location *)
@@ -277,7 +289,7 @@ type dir = private
   | DirLine of {
       loc:    Loc.t;        (** Source location *)
       number: int;          (** Line number *)
-      path:   Fpath.t;      (** Source file *)
+      path:   value;        (** Source file *)
       level:  level option; (** Line level *)
     } (** Override the current location *)
   | DirFILE of {
@@ -371,6 +383,18 @@ val body : Loc.t -> line list -> body
 
 val args : Loc.t -> seg list -> args
 (** [args loc args] constructs a list of macro arguments at [loc] with the
+    arguments [args]. *)
+
+(** {3 Includes} *)
+
+val incl_path : Loc.t -> bool -> value -> incl
+(** [incl_path loc sys path] constructs an include source at location [loc]
+    that includes the file at path [path].  If [sys] is [true], only the system
+    paths are searched. (I.e., the [<...>] syntax was used.) *)
+
+val incl_macro : Loc.t -> name -> args option -> incl
+(** [incl_macro loc name args] constructs an include source at location [loc]
+    that includes the results of expanding the macro named [name] with the
     arguments [args]. *)
 
 (** {3 Time Scales} *)
@@ -521,10 +545,9 @@ val keywords_1800_2012 : Loc.t -> keywords
 val dir_reset_all : Loc.t -> dir
 (** [dir_reset_all loc] constructs a reset all directive at location [loc]. *)
 
-val dir_include : Loc.t -> bool -> Fpath.t -> dir
-(** [dir_include loc sys path] constructs an include directive at location [loc]
-    including the file at [path].  If [sys] is [true], then only the system
-    paths are searched (I.e., the [<...>] syntax was used.) *)
+val dir_include : Loc.t -> incl -> dir
+(** [dir_include loc src] constructs an include directive at location [loc]
+    including source [src]. *)
 
 val dir_define : Loc.t -> name -> params option -> body option -> dir
 (** [dir_define loc name params body] constructs a define directive at location
@@ -594,7 +617,7 @@ val dir_pragma : Loc.t -> pragma_expr list -> dir
 (** [dir_pragma loc exprs] constructs a pragma directive at location [loc] with
     the pragma expressions [exprs]. *)
 
-val dir_line : Loc.t -> int -> Fpath.t -> level option -> dir
+val dir_line : Loc.t -> int -> value -> level option -> dir
 (** [dir_line number loc path level] constructs a line directive at location
     [loc] that overrides the current program location to be line [number] in
     [path].  If [level] is not [None], it determines whether an include was just
@@ -669,6 +692,10 @@ val pp_body : body -> formatter -> unit
 val pp_args : args -> formatter -> unit
 (** [pp_args args fmt] pretty-prints the macro arguments list [args] to the
     formatter [fmt]. *)
+
+val pp_incl : incl -> formatter -> unit
+(** [pp_incl incl fmt] pretty-prints the include source [incl] to the formatter
+    [fmt]. *)
 
 val pp_mag : mag -> formatter -> unit
 (** [pp_mag mag fmt] pretty-prints the order of magnitude [mag] to the formatter

@@ -8,13 +8,21 @@ open CommonTest
 
 (* Fixtures *)
 
+(* Includes *)
+
+let incl_path ?loc:(loc = LocTest.gen ()) ?sys:(sys = false) ?path:(path = ValueTest.value ()) _ =
+  Post.incl_path loc sys path
+
+let incl_macro ?loc:(loc = LocTest.gen ()) ?name:(name = NameTest.name ()) ?args:(args = None) _ =
+  Post.incl_macro loc name args
+
 (* Directives *)
 
 let dir_reset_all ?loc:(loc = LocTest.gen ()) _ =
   Post.dir_reset_all loc
 
-let dir_include ?loc:(loc = LocTest.gen ()) ?sys:(sys = false) ?path:(path = Result.get_ok (Fpath.of_string "path/to/include")) _ =
-  Post.dir_include loc sys path
+let dir_include ?loc:(loc = LocTest.gen ()) ?src:(src = incl_path ()) _ =
+  Post.dir_include loc src
 
 let dir_define ?loc:(loc = LocTest.gen ()) ?name:(name = NameTest.name ()) ?params:(params = None) ?body:(body = None) _ =
   Post.dir_define loc name params body
@@ -64,7 +72,7 @@ let dir_end_cell_define ?loc:(loc = LocTest.gen ()) _ =
 let dir_pragma ?loc:(loc = LocTest.gen ()) ?exprs:(exprs = []) _ =
   Post.dir_pragma loc exprs
 
-let dir_line ?loc:(loc = LocTest.gen ()) ?number:(number = 0) ?path:(path = Result.get_ok (Fpath.of_string "path/to/original/source")) ?level:(level = None) _ =
+let dir_line ?loc:(loc = LocTest.gen ()) ?number:(number = 0) ?path:(path = ValueTest.value ()) ?level:(level = None) _ =
   Post.dir_line loc number path level
 
 let dir_FILE ?loc:(loc = LocTest.gen ()) _ =
@@ -94,13 +102,23 @@ let seg_directive ?loc:(loc = LocTest.gen ()) ?dir:(dir = dir_reset_all ()) _ =
 
 (* Assertions *)
 
-let rec assert_dir_equal ~ctxt expected actual = match expected, actual with
+let rec assert_incl_equal ~ctxt expected actual = match expected, actual with
+  | Post.IncludePath expected, Post.IncludePath actual ->
+    LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
+    assert_equal ~ctxt ~printer:string_of_bool ~msg:"System flags are not equal" expected.sys actual.sys;
+    ValueTest.assert_value_equal ~ctxt expected.path actual.path
+  | Post.IncludeMacro expected, Post.IncludeMacro actual ->
+    LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
+    NameTest.assert_name_equal ~ctxt expected.name actual.name;
+    assert_optional_equal ~ctxt "args" assert_args_equal expected.args actual.args
+  | _ -> assert_failure "Include sources are not equal"
+
+and assert_dir_equal ~ctxt expected actual = match expected, actual with
   | Post.DirResetAll expected, Post.DirResetAll actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc
   | Post.DirInclude expected, Post.DirInclude actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    assert_equal ~ctxt ~printer:string_of_bool ~msg:"System flags are not equal" expected.sys actual.sys;
-    assert_equal ~ctxt ~cmp:Fpath.equal ~printer:Fpath.to_string ~msg:"Paths are not equal" expected.path actual.path
+    assert_incl_equal ~ctxt expected.src actual.src
   | Post.DirDefine expected, Post.DirDefine actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
     NameTest.assert_name_equal ~ctxt expected.name actual.name;
@@ -150,7 +168,7 @@ let rec assert_dir_equal ~ctxt expected actual = match expected, actual with
   | Post.DirLine expected, Post.DirLine actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
     assert_equal ~ctxt ~printer:string_of_int ~msg:"Line numbers are not equal" expected.number actual.number;
-    assert_equal ~ctxt ~cmp:Fpath.equal ~printer:Fpath.to_string ~msg:"Paths are not equal" expected.path actual.path;
+    ValueTest.assert_value_equal ~ctxt expected.path actual.path;
     assert_optional_equal ~ctxt "line level" LevelTest.assert_level_equal expected.level actual.level
   | Post.DirFILE expected, Post.DirFILE actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc
@@ -179,6 +197,40 @@ and assert_seg_equal ~ctxt expected actual = match expected, actual with
 
 (* Constructurs *)
 
+let fail_incl_expected expected actual =
+  str_formatter
+    |> dprintf "Include sources are not equal: expected %s, found %t" expected (Post.pp_incl actual)
+    |> flush_str_formatter
+    |> assert_failure
+
+let test_incl_path ctxt =
+  let loc = LocTest.gen () in
+  let sys = true in
+  let path = ValueTest.value () in
+  match Post.incl_path loc sys path with
+    | Post.IncludePath actual ->
+      LocTest.assert_loc_equal ~ctxt loc actual.loc;
+      assert_equal ~ctxt ~printer:string_of_bool ~msg:"System flags are not equal" sys actual.sys;
+      ValueTest.assert_value_equal ~ctxt path actual.path
+    | actual -> fail_incl_expected "path" actual
+
+let test_incl_macro ctxt =
+  let loc = LocTest.gen () in
+  let name = NameTest.name () in
+  let args = Some (args ~args:[seg_source (); seg_directive ()] ()) in
+  match Post.incl_macro loc name args with
+    | Post.IncludeMacro actual ->
+      LocTest.assert_loc_equal ~ctxt loc actual.loc;
+      NameTest.assert_name_equal ~ctxt name actual.name;
+      assert_optional_equal ~ctxt "arguments" assert_args_equal args actual.args
+    | actual -> fail_incl_expected "macro" actual
+
+let constr_incl =
+  "Include Sources" >::: [
+    "Paths"  >:: test_incl_path;
+    "Macros" >:: test_incl_macro;
+  ]
+
 (* Directives *)
 
 let fail_dir_expected expected actual =
@@ -195,17 +247,11 @@ let test_dir_reset_all ctxt =
 
 let test_dir_include ctxt =
   let loc = LocTest.gen () in
-  let sys = true in
-  let path =
-    "the/path"
-      |> Fpath.of_string
-      |> Result.get_ok
-  in
-  match Post.dir_include loc sys path with
+  let src = incl_path () in
+  match Post.dir_include loc src with
     | Post.DirInclude actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      assert_equal ~ctxt ~printer:string_of_bool ~msg:"System flags are not equal" sys actual.sys;
-      assert_equal ~ctxt ~cmp:Fpath.equal ~printer:Fpath.to_string ~msg:"Paths are not equal" path actual.path
+      assert_incl_equal ~ctxt src actual.src
     | actual -> fail_dir_expected "include" actual
 
 let test_dir_define ctxt =
@@ -363,17 +409,13 @@ let test_dir_pragma ctxt =
 let test_dir_line ctxt =
   let loc = LocTest.gen () in
   let number = 42 in
-  let path =
-    "path/to/original/source"
-      |> Fpath.of_string
-      |> Result.get_ok
-  in
+  let path = ValueTest.value () in
   let level = Some (LevelTest.level_entered ()) in
   match Post.dir_line loc number path level with
     | Post.DirLine actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
       assert_equal ~ctxt ~printer:string_of_int ~msg:"Line numbers are not equal" number actual.number;
-      assert_equal ~ctxt ~cmp:Fpath.equal ~printer:Fpath.to_string ~msg:"Paths are not equal" path actual.path;
+      ValueTest.assert_value_equal ~ctxt path actual.path;
       assert_optional_equal ~ctxt "line level" LevelTest.assert_level_equal level actual.level
     | actual -> fail_dir_expected "line level" actual
 
@@ -493,6 +535,52 @@ let constr_seg =
 
 (* Pretty Printing *)
 
+(* Includes *)
+
+let assert_pp_incl = assert_pp Post.pp_incl
+
+let test_pp_incl_path ctxt =
+  let path = ValueTest.value () in
+  ()
+    |> incl_path ~sys:true ~path
+    |> assert_pp_incl ~ctxt [
+         fprintf str_formatter "<%t>"
+           (Post.pp_value path)
+           |> flush_str_formatter
+       ];
+  ()
+    |> incl_path ~sys:false ~path
+    |> assert_pp_incl ~ctxt [
+         fprintf str_formatter "\"%t\""
+           (Post.pp_value path)
+           |> flush_str_formatter
+       ]
+
+let test_pp_incl_macro ctxt =
+  let name = NameTest.name () in
+  let args = args ~args:[seg_source (); seg_directive ()] () in
+  ()
+    |> incl_macro ~name ~args:None
+    |> assert_pp_incl ~ctxt [
+         fprintf str_formatter "`%t"
+           (Post.pp_name name)
+           |> flush_str_formatter
+       ];
+  ()
+    |> incl_macro ~name ~args:(Some args)
+    |> assert_pp_incl ~ctxt [
+         fprintf str_formatter "`%t(%t)"
+           (Post.pp_name name)
+           (Post.pp_args args)
+           |> flush_str_formatter
+       ]
+
+let pp_incl =
+  "Include Sources" >::: [
+    "Paths"  >:: test_pp_incl_path;
+    "Macros" >:: test_pp_incl_macro;
+  ]
+
 (* Directives *)
 
 let assert_pp_dir = assert_pp Post.pp_dir
@@ -503,17 +591,12 @@ let test_pp_dir_reset_all ctxt =
     |> assert_pp_dir ~ctxt ["`resetall"]
 
 let test_pp_dir_include ctxt =
-  let path = Result.get_ok (Fpath.of_string "path/to/the/included/file") in
+  let src = incl_path () in
   ()
-    |> dir_include ~sys:true ~path
+    |> dir_include ~src
     |> assert_pp_dir ~ctxt [
-         fprintf str_formatter "`include <%s>" (Fpath.to_string path)
-           |> flush_str_formatter
-       ];
-  ()
-    |> dir_include ~sys:false ~path
-    |> assert_pp_dir ~ctxt [
-         fprintf str_formatter "`include %S" (Fpath.to_string path)
+         fprintf str_formatter "`include %t"
+           (Post.pp_incl src)
            |> flush_str_formatter
        ]
 
@@ -733,14 +816,14 @@ let test_pp_dir_pragma ctxt =
 
 let test_pp_dir_line ctxt =
   let number = 42 in
-  let path = Result.get_ok (Fpath.of_string "path/to/the/original/source") in
+  let path = ValueTest.value () in
   let level = Some (LevelTest.level_entered ()) in
   ()
     |> dir_line ~number ~path ~level
     |> assert_pp_dir ~ctxt [
-         fprintf str_formatter "`line %d %S %t"
+         fprintf str_formatter "`line %d \"%t\" %t"
            number
-           (Fpath.to_string path)
+           (Post.pp_value path)
            (Post.pp_level level)
            |> flush_str_formatter
     ]

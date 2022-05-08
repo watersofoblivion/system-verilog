@@ -58,6 +58,18 @@ val args : ?loc:Loc.t -> ?args:Post.seg list -> unit -> Post.args
 (** [args loc args] constructs a macro arguments list at location [loc] composed
     of the arguments [args]. *)
 
+(** {3 Includes} *)
+
+val incl_path : ?loc:Loc.t -> ?sys:bool -> ?path:Post.value -> unit -> Post.incl
+(** [incl_path ?loc ?sys ?path ()] constructs a path include source at location
+    [loc] including the file at the path [path].  If [sys] is [true], only the
+    system paths are searched. (I.e., the [<...>] syntax was used.) *)
+
+val incl_macro : ?loc:Loc.t -> ?name:Post.name -> ?args:Post.args option -> unit -> Post.incl
+(** [incl_macro ?loc ?name ?args ()] constructs a macro include source at
+    location [loc] that includes the results of expanding the macro named [name]
+    with the arguments [args]. *)
+
 (** {3 Timescales} *)
 
 (** {4 Orders of Magnitude} *)
@@ -180,10 +192,9 @@ val keywords_1800_2012 : ?loc:Loc.t -> unit -> Post.keywords
 val dir_reset_all : ?loc:Loc.t -> unit -> Post.dir
 (** [dir_reset_all ?loc ()] constructs a reset all directive at location [loc]. *)
 
-val dir_include : ?loc:Loc.t -> ?sys:bool -> ?path:Fpath.t -> unit -> Post.dir
-(** [dir_include ?loc ?sys ?path ()] constructs an include directive at location
-    [log] including the file at [path].  If [sys] is true, only the system paths
-    are searched. *)
+val dir_include : ?loc:Loc.t -> ?src:Post.incl -> unit -> Post.dir
+(** [dir_include ?loc ?src ()] constructs an include directive at location [loc]
+    including the file specified by [src]. *)
 
 val dir_define : ?loc:Loc.t -> ?name:Post.name -> ?params:Post.params option -> ?body:Post.body option -> unit -> Post.dir
 (** [dir_define ?loc ?name ?params ?body ()] constructs a define directive at
@@ -250,7 +261,7 @@ val dir_pragma : ?loc:Loc.t -> ?exprs:Post.pragma_expr list -> unit -> Post.dir
 (** [dir_pragma ?loc ?exprs ()] constructs a pragma directive a location [loc]
     with the expressions [exprs]. *)
 
-val dir_line : ?loc:Loc.t -> ?number:int -> ?path:Fpath.t -> ?level:Post.level option -> unit -> Post.dir
+val dir_line : ?loc:Loc.t -> ?number:int -> ?path:Post.value -> ?level:Post.level option -> unit -> Post.dir
 (** [dir_line ?loc ?number ?path ?level ()] constructs a line level directive at
     location [loc] with line [number] in the file [path] with level [level]. *)
 
@@ -311,6 +322,10 @@ val assert_body_equal : ctxt:test_ctxt -> Post.body -> Post.body -> unit
 val assert_args_equal : ctxt:test_ctxt -> Post.args -> Post.args -> unit
 (** [assert_args_equal ~ctxt expected actual] asserts that the macro arguments
     [actual] are equal to the macro arguments [expected]. *)
+
+val assert_incl_equal : ctxt:test_ctxt -> Post.incl -> Post.incl -> unit
+(** [assert_incl_equal ~ctxt expected actual] asserts that the include value
+    [actual] is equal to the include value [expected]. *)
 
 val assert_mag_equal : ctxt:test_ctxt -> Post.mag -> Post.mag -> unit
 (** [assert_mag_equal ~ctxt expected actual] asserts that the order of magnitude

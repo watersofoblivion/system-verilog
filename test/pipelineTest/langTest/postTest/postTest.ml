@@ -23,6 +23,7 @@ let suite =
       PragmaTest.constr;
       LevelTest.constr;
       KeywordsTest.constr;
+      DirArgSegTest.constr_incl;
       DirArgSegTest.constr_dir;
       DirArgSegTest.constr_args;
       DirArgSegTest.constr_seg;
@@ -39,6 +40,7 @@ let suite =
       PragmaTest.pp;
       LevelTest.pp;
       KeywordsTest.pp;
+      DirArgSegTest.pp_incl;
       DirArgSegTest.pp_dir;
       DirArgSegTest.pp_args;
       DirArgSegTest.pp_seg;
