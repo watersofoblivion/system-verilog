@@ -22,11 +22,41 @@ val value : ?loc:Loc.t -> ?value:string -> unit -> Post.value
 (** [name ?loc ?value ()] constructs a value at location [loc] with value
     [value]. *)
 
-(** {3 Macro Parameters} *)
+(** {3 Macros} *)
+
+(** {4 Parameters} *)
 
 val param : ?loc:Loc.t -> ?name:Post.name -> ?default:Post.value option -> unit -> Post.param
-(** [name ?loc ?name ?value ()] constructs a parameter at location [loc] named
-    [name] with the default value [default]. *)
+(** [name ?loc ?name ?value ()] constructs a macro parameter at location [loc]
+    named [name] with the default value [default]. *)
+
+val params : ?loc:Loc.t -> ?params:Post.param list -> unit -> Post.params
+(** [params ?loc ?params ()] constructs a macro parameter list at location [loc]
+    composed of the parameters [params]. *)
+
+(** {4 Bodies} *)
+
+val elem_source : ?loc:Loc.t -> ?value:Post.value -> unit -> Post.elem
+(** [elem_source ?loc ?value ()] constructs a source code macro body element at
+    location [loc] with the source [value]. *)
+
+val elem_var : ?loc:Loc.t -> ?name:Post.name -> unit -> Post.elem
+(** [elem_var ?loc ?name ()] constructs a variable reference macro body element
+    at location [loc] referencing the parameter named [name]. *)
+
+val line : ?loc:Loc.t -> ?elems:Post.elem list -> unit -> Post.line
+(** [line ?loc ?elems ()] constructs a macro body line at location [loc]
+    composed of the elements [elems]. *)
+
+val body : ?loc:Loc.t -> ?lines:Post.line list -> unit -> Post.body
+(** [body ?loc ?lines ()] constructs a macro body at location [loc] composed of
+    the lines [lines]. *)
+
+(** {4 Arguments} *)
+
+val args : ?loc:Loc.t -> ?args:Post.seg list -> unit -> Post.args
+(** [args loc args] constructs a macro arguments list at location [loc] composed
+    of the arguments [args]. *)
 
 (** {3 Timescales} *)
 
@@ -155,7 +185,7 @@ val dir_include : ?loc:Loc.t -> ?sys:bool -> ?path:Fpath.t -> unit -> Post.dir
     [log] including the file at [path].  If [sys] is true, only the system paths
     are searched. *)
 
-val dir_define : ?loc:Loc.t -> ?name:Post.name -> ?params:Post.param list -> ?body:Post.value option -> unit -> Post.dir
+val dir_define : ?loc:Loc.t -> ?name:Post.name -> ?params:Post.params option -> ?body:Post.body option -> unit -> Post.dir
 (** [dir_define ?loc ?name ?params ?body ()] constructs a define directive at
     location [loc] defining the macro name [name], with parameters [params] and
     the body [body]. *)
@@ -168,7 +198,7 @@ val dir_undefine_all : ?loc:Loc.t -> unit -> Post.dir
 (** [dir_undefine_all ?loc ()] constructs an undefine all directive at location
     [loc]. *)
 
-val dir_macro : ?loc:Loc.t -> ?name:Post.name -> ?args:Post.seg list -> unit -> Post.dir
+val dir_macro : ?loc:Loc.t -> ?name:Post.name -> ?args:Post.args option -> unit -> Post.dir
 (** [dir_macro ?loc ?name ?args ()] constructs a macro expansion directive at
     location [loc] applying the macro [name] to the arguments [args]. *)
 
@@ -261,6 +291,26 @@ val assert_value_equal : ctxt:test_ctxt -> Post.value -> Post.value -> unit
 val assert_param_equal : ctxt:test_ctxt -> Post.param -> Post.param -> unit
 (** [assert_param_equal ~ctxt expected actual] asserts that the parameter
     [actual] is equal to the parameter [expected]. *)
+
+val assert_params_equal : ctxt:test_ctxt -> Post.params -> Post.params -> unit
+(** [assert_params_equal ~ctxt expected actual] asserts that the parameter list
+    [actual] are equal to the parameter list [expected]. *)
+
+val assert_elem_equal : ctxt:test_ctxt -> Post.elem -> Post.elem -> unit
+(** [assert_elem_equal ~ctxt expected actual] asserts that the macro body
+    element [actual] is equal to the macro body element [expected]. *)
+
+val assert_line_equal : ctxt:test_ctxt -> Post.line -> Post.line -> unit
+(** [assert_line_equal ~ctxt expected actual] asserts that the macro body line
+    [actual] is equal to the macro body line [expected]. *)
+
+val assert_body_equal : ctxt:test_ctxt -> Post.body -> Post.body -> unit
+(** [assert_body_equal ~ctxt expected actual] asserts that the macro body
+    [actual] is equal to the macro body [expected]. *)
+
+val assert_args_equal : ctxt:test_ctxt -> Post.args -> Post.args -> unit
+(** [assert_args_equal ~ctxt expected actual] asserts that the macro arguments
+    [actual] are equal to the macro arguments [expected]. *)
 
 val assert_mag_equal : ctxt:test_ctxt -> Post.mag -> Post.mag -> unit
 (** [assert_mag_equal ~ctxt expected actual] asserts that the order of magnitude

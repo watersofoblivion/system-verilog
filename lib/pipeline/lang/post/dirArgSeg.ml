@@ -7,10 +7,10 @@ open Common
 type dir =
   | DirResetAll of { loc: Loc.t }
   | DirInclude of { loc: Loc.t; sys: bool; path: Fpath.t }
-  | DirDefine of { loc: Loc.t; name: Name.name; params: Param.param list; body: Value.value option }
+  | DirDefine of { loc: Loc.t; name: Name.name; params: Macro.params option; body: Macro.body option }
   | DirUndef of { loc: Loc.t; name: Name.name }
   | DirUndefineAll of { loc: Loc.t }
-  | DirMacro of { loc: Loc.t; name: Name.name; args: seg list }
+  | DirMacro of { loc: Loc.t; name: Name.name; args: args option }
   | DirIfDef of { loc: Loc.t; macro: Name.name }
   | DirIfNDef of { loc: Loc.t; macro: Name.name }
   | DirElsIf of { loc: Loc.t; macro: Name.name }
@@ -28,6 +28,8 @@ type dir =
   | DirLINE of { loc: Loc.t }
   | DirBeginKeywords of { loc: Loc.t; keywords: Keywords.keywords }
   | DirEndKeywords of { loc: Loc.t }
+and args =
+  | Args of { loc: Loc.t; args: seg list }
 and seg =
   | SegSource of { loc: Loc.t; src: string }
   | SegDirective of { loc: Loc.t; dir: dir }
@@ -56,6 +58,8 @@ let dir_LINE loc = DirLINE { loc }
 let dir_begin_keywords loc keywords = DirBeginKeywords { loc; keywords }
 let dir_end_keywords loc = DirEndKeywords { loc }
 
+let args loc args = Args { loc; args }
+
 let seg_source loc src = SegSource { loc; src }
 let seg_directive loc dir = SegDirective { loc; dir }
 
@@ -66,10 +70,20 @@ let rec pp_dir = function
     if dir.sys
     then dprintf "`include <%s>" path
     else dprintf "`include %S" path
-  | DirDefine _ -> failwith "TODO"
+  | DirDefine dir ->
+    let pp_params fmt params = fprintf fmt "(%t)" (Macro.pp_params params) in
+    let pp_body fmt body = fprintf fmt " %t" (Macro.pp_body body) in
+    dprintf "`define %t%a%a"
+      (Name.pp_name dir.name)
+      (pp_print_option pp_params) dir.params
+      (pp_print_option pp_body) dir.body
   | DirUndef dir -> dprintf "`undef %t" (Name.pp_name dir.name)
   | DirUndefineAll _ -> dprintf "`undefineall"
-  | DirMacro _ -> failwith "TODO"
+  | DirMacro dir ->
+    let pp fmt args = fprintf fmt "(%t)" (pp_args args) in
+    dprintf "`%t%a"
+      (Name.pp_name dir.name)
+      (pp_print_option pp) dir.args
   | DirIfDef dir -> dprintf "`ifdef %t" (Name.pp_name dir.macro)
   | DirIfNDef dir -> dprintf "`ifndef %t" (Name.pp_name dir.macro)
   | DirElsIf dir -> dprintf "`elsif %t" (Name.pp_name dir.macro)
@@ -93,6 +107,14 @@ let rec pp_dir = function
   | DirLINE _ -> dprintf "`__LINE__"
   | DirBeginKeywords dir -> dprintf "`begin_keywords %t" (Keywords.pp_keywords dir.keywords)
   | DirEndKeywords _ -> dprintf "`end_keywords"
+
+and pp_args args =
+  let pp fmt arg = pp_seg arg fmt in
+  match args with
+    | Args args ->
+      let pp_sep fmt _ = fprintf fmt ", " in
+      dprintf "%a"
+        (pp_print_list ~pp_sep pp) args.args
 
 and pp_seg = function
   | SegSource seg -> dprintf "%s" seg.src

@@ -2,13 +2,13 @@
 
 include Name
 include Value
-include Param
+include Macro
 include Timescale
 include Net
 include Drive
 include Pragma
 include Level
 include Keywords
-include DirSeg
+include DirArgSeg
 include File
 include CompilationUnit

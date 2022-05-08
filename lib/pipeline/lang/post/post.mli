@@ -28,6 +28,38 @@ type param = private
     }
 (** Macro parameters *)
 
+type params = private
+  | Params of {
+      loc:    Loc.t;      (** Source location *)
+      params: param list; (** Parameters *)
+    }
+(** Macro parameter lists *)
+
+type elem =
+  | ElemSource of {
+      loc:   Loc.t;       (** Source location *)
+      value: value; (** Source code *)
+    } (** Source code *)
+  | ElemVar of {
+      loc:  Loc.t;     (** Source location *)
+      name: name; (** Variable name *)
+    } (** Variable *)
+(** An element of a macro body *)
+
+type line =
+  | Line of {
+      loc:   Loc.t;          (** Source location *)
+      elems: elem list; (** Line elements *)
+   } (** A line *)
+(** A line of a macro body *)
+
+type body =
+  | Body of {
+      loc:   Loc.t;          (** Source location *)
+      lines: line list; (** Lines *)
+    } (** Body *)
+(** A macro body *)
+
 type mag = private
   | Magnitude1 of {
       loc: Loc.t; (** Source location *)
@@ -181,10 +213,10 @@ type dir = private
       path: Fpath.t; (** The path to the file *)
     } (** Include a source file *)
   | DirDefine of {
-      loc:    Loc.t;        (** Source location *)
-      name:   name;         (** The name of the macro *)
-      params: param list;   (** The parameters to the macro *)
-      body:   value option; (** The body of the macro *)
+      loc:    Loc.t;         (** Source location *)
+      name:   name;          (** The name of the macro *)
+      params: params option; (** The parameters to the macro *)
+      body:   body option;   (** The body of the macro *)
     } (** Define a macro *)
   | DirUndef of {
       loc:  Loc.t; (** Source location *)
@@ -194,9 +226,9 @@ type dir = private
       loc: Loc.t; (** Source location *)
     } (** Undefine all user-defined macros *)
   | DirMacro of {
-      loc:  Loc.t;    (** Source location *)
-      name: name;     (** The name of the macro to expand *)
-      args: seg list; (** The arguments to the macro *)
+      loc:  Loc.t;       (** Source location *)
+      name: name;        (** The name of the macro to expand *)
+      args: args option; (** The arguments to the macro *)
     } (** Expand a macro *)
   | DirIfDef of {
       loc:   Loc.t; (** Source location *)
@@ -262,6 +294,13 @@ type dir = private
       loc: Loc.t; (** Source location *)
     } (** Stop using a specific set of keywords *)
 
+and args = private
+  | Args of {
+      loc:  Loc.t;    (** Source location *)
+      args: seg list; (** Arguments *)
+    } (** Arguments **)
+(** Macro arguments *)
+
 and seg = private
   | SegSource of {
       loc: Loc.t;  (** Source location *)
@@ -298,11 +337,41 @@ val name : Loc.t -> string -> name
 val value : Loc.t -> string -> value
 (** [value loc value] constructs a value at location [loc] with value [value]. *)
 
-(** {3 Macro Parameters} *)
+(** {3 Macros} *)
+
+(** {4 Parameters} *)
 
 val param : Loc.t -> name -> value option -> param
 (** [param loc name default] constructs a macro parameter named [name] at
     location [loc].  If [default] is not [None], sets default text. *)
+
+val params : Loc.t -> param list -> params
+(** [params loc params] constructs a macro parameter list at location [loc] with
+    the parameters [params]. *)
+
+(** {4 Bodies} *)
+
+val elem_source : Loc.t -> value -> elem
+(** [elem_source loc value] constructs a source code macro body element at
+    location [loc] with the source code [value]. *)
+
+val elem_var : Loc.t -> name -> elem
+(** [elem_var loc name] constructs a variable macro body element at location
+    [loc] referencing the parameter named [name]. *)
+
+val line : Loc.t -> elem list -> line
+(** [line loc elems] constucts a macro body line at location [loc] composed of
+    the elements [elems]. *)
+
+val body : Loc.t -> line list -> body
+(** [body loc lines] constructs a macro body at location [loc] composed of the
+    lines [lines]. *)
+
+(** {4 Arguments} *)
+
+val args : Loc.t -> seg list -> args
+(** [args loc args] constructs a list of macro arguments at [loc] with the
+    arguments [args]. *)
 
 (** {3 Time Scales} *)
 
@@ -457,7 +526,7 @@ val dir_include : Loc.t -> bool -> Fpath.t -> dir
     including the file at [path].  If [sys] is [true], then only the system
     paths are searched (I.e., the [<...>] syntax was used.) *)
 
-val dir_define : Loc.t -> name -> param list -> value option -> dir
+val dir_define : Loc.t -> name -> params option -> body option -> dir
 (** [dir_define loc name params body] constructs a define directive at location
     [loc] defining the macro named [name] with parameters [params].  If [body]
     is not [None], it is used as the text to expand. *)
@@ -470,7 +539,7 @@ val dir_undefine_all : Loc.t -> dir
 (** [dir_undefine_all loc] constructs an undefine all directive at location
     [loc] which un-defines all current user-defined macros. *)
 
-val dir_macro : Loc.t -> name -> seg list -> dir
+val dir_macro : Loc.t -> name -> args option -> dir
 (** [dir_macro loc name args] constructs a macro expansion directive at location
     [loc] which expands the macro named [name] with the arguments [args]. *)
 
@@ -578,8 +647,28 @@ val pp_value : value -> formatter -> unit
 (** [pp_value value fmt] pretty-prints the value [value] to the formatter [fmt]. *)
 
 val pp_param : param -> formatter -> unit
-(** [pp_param param fmt] pretty-prints the parameter [param] to the formatter
+(** [pp_param param fmt] pretty-prints the macro parameter [param] to the
+    formatter [fmt]. *)
+
+val pp_params : params -> formatter -> unit
+(** [pp_params params fmt] pretty-prints the macro parameter list [params] to
+    the formatter [fmt]. *)
+
+val pp_elem : elem -> formatter -> unit
+(** [pp_elem elem fmt] pretty-prints the macro element [elem] to the formatter
     [fmt]. *)
+
+val pp_line : line -> formatter -> unit
+(** [pp_line line fmt] pretty-prints the macro line [line] to the formatter
+    [fmt]. *)
+
+val pp_body : body -> formatter -> unit
+(** [pp_body body fmt] pretty-prints the macro body [body] to the formatter
+    [fmt]. *)
+
+val pp_args : args -> formatter -> unit
+(** [pp_args args fmt] pretty-prints the macro arguments list [args] to the
+    formatter [fmt]. *)
 
 val pp_mag : mag -> formatter -> unit
 (** [pp_mag mag fmt] pretty-prints the order of magnitude [mag] to the formatter

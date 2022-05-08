@@ -16,7 +16,7 @@ let dir_reset_all ?loc:(loc = LocTest.gen ()) _ =
 let dir_include ?loc:(loc = LocTest.gen ()) ?sys:(sys = false) ?path:(path = Result.get_ok (Fpath.of_string "path/to/include")) _ =
   Post.dir_include loc sys path
 
-let dir_define ?loc:(loc = LocTest.gen ()) ?name:(name = NameTest.name ()) ?params:(params = []) ?body:(body = None) _ =
+let dir_define ?loc:(loc = LocTest.gen ()) ?name:(name = NameTest.name ()) ?params:(params = None) ?body:(body = None) _ =
   Post.dir_define loc name params body
 
 let dir_undef ?loc:(loc = LocTest.gen ()) ?name:(name = NameTest.name ()) _ =
@@ -25,7 +25,7 @@ let dir_undef ?loc:(loc = LocTest.gen ()) ?name:(name = NameTest.name ()) _ =
 let dir_undefine_all ?loc:(loc = LocTest.gen ()) _ =
   Post.dir_undefine_all loc
 
-let dir_macro ?loc:(loc = LocTest.gen ()) ?name:(name = NameTest.name ()) ?args:(args = []) _ =
+let dir_macro ?loc:(loc = LocTest.gen ()) ?name:(name = NameTest.name ()) ?args:(args = None) _ =
   Post.dir_macro loc name args
 
 let dir_if_def ?loc:(loc = LocTest.gen ()) ?macro:(macro = NameTest.name ()) _ =
@@ -79,6 +79,11 @@ let dir_begin_keywords ?loc:(loc = LocTest.gen ()) ?keywords:(keywords = Keyword
 let dir_end_keywords ?loc:(loc = LocTest.gen ()) _ =
   Post.dir_end_keywords loc
 
+(* Macro Arguments *)
+
+let args ?loc:(loc = LocTest.gen ()) ?args:(args = []) _ =
+  Post.args loc args
+
 (* Segments *)
 
 let seg_source ?loc:(loc = LocTest.gen ()) ?src:(src = "") _ =
@@ -99,8 +104,8 @@ let rec assert_dir_equal ~ctxt expected actual = match expected, actual with
   | Post.DirDefine expected, Post.DirDefine actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
     NameTest.assert_name_equal ~ctxt expected.name actual.name;
-    List.iter2 (ParamTest.assert_param_equal ~ctxt) expected.params actual.params;
-    assert_optional_equal ~ctxt "value" ValueTest.assert_value_equal expected.body actual.body
+    assert_optional_equal ~ctxt "params" MacroTest.assert_params_equal expected.params actual.params;
+    assert_optional_equal ~ctxt "body" MacroTest.assert_body_equal expected.body actual.body
   | Post.DirUndef expected, Post.DirUndef actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
     NameTest.assert_name_equal ~ctxt expected.name actual.name
@@ -109,7 +114,7 @@ let rec assert_dir_equal ~ctxt expected actual = match expected, actual with
   | Post.DirMacro expected, Post.DirMacro actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
     NameTest.assert_name_equal ~ctxt expected.name actual.name;
-    List.iter2 (assert_seg_equal ~ctxt) expected.args actual.args
+    assert_optional_equal ~ctxt "args" assert_args_equal expected.args actual.args
   | Post.DirIfDef expected, Post.DirIfDef actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
     NameTest.assert_name_equal ~ctxt expected.macro actual.macro
@@ -158,6 +163,11 @@ let rec assert_dir_equal ~ctxt expected actual = match expected, actual with
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc
   | _ -> assert_failure "Directives are not equal"
 
+and assert_args_equal ~ctxt expected actual = match expected, actual with
+  | Post.Args expected, Post.Args actual ->
+    LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
+    List.iter2 (assert_seg_equal ~ctxt) expected.args actual.args
+
 and assert_seg_equal ~ctxt expected actual = match expected, actual with
   | Post.SegSource expected, Post.SegSource actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
@@ -201,23 +211,26 @@ let test_dir_include ctxt =
 let test_dir_define ctxt =
   let loc = LocTest.gen () in
   let name = NameTest.name () in
-  let params = [
-    ParamTest.param
+  let params = Some (MacroTest.params ~params:[
+    MacroTest.param
       ~name:(NameTest.name ~name:"first" ())
       ~default:(Some (ValueTest.value ~value:"first" ()))
       ();
-    ParamTest.param
+    MacroTest.param
       ~name:(NameTest.name ~name:"second" ())
       ~default:None
       ();
-  ] in
-  let body = Some (ValueTest.value ()) in
+  ] ()) in
+  let body = Some (MacroTest.body ~lines:[
+    MacroTest.line ~elems:[MacroTest.elem_source ()] ();
+    MacroTest.line ~elems:[MacroTest.elem_var ()] ();
+  ] ()) in
   match Post.dir_define loc name params body with
     | Post.DirDefine actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
       NameTest.assert_name_equal ~ctxt name actual.name;
-      List.iter2 (ParamTest.assert_param_equal ~ctxt) params actual.params;
-      assert_optional_equal ~ctxt "body" ValueTest.assert_value_equal body actual.body
+      assert_optional_equal ~ctxt "parameters" MacroTest.assert_params_equal params actual.params;
+      assert_optional_equal ~ctxt "body" MacroTest.assert_body_equal body actual.body
     | actual -> fail_dir_expected "macro definition" actual
 
 let test_dir_undef ctxt =
@@ -238,15 +251,15 @@ let test_dir_undefine_all ctxt =
 let test_dir_macro ctxt =
   let loc = LocTest.gen () in
   let name = NameTest.name () in
-  let args = [
+  let args = Some (args ~args:[
     seg_source ~src:"the-first-arg" ();
     seg_directive ~dir:(dir_macro ()) ();
-  ] in
+  ] ()) in
   match Post.dir_macro loc name args with
     | Post.DirMacro actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
       NameTest.assert_name_equal ~ctxt name actual.name;
-      List.iter2 (assert_seg_equal ~ctxt) args actual.args
+      assert_optional_equal "arguments" ~ctxt assert_args_equal args actual.args
     | actual -> fail_dir_expected "macro use" actual
 
 let test_dir_if_def ctxt =
@@ -430,6 +443,22 @@ let constr_dir =
     ];
   ]
 
+(* Arguments *)
+
+let test_args ctxt =
+  let loc = LocTest.gen () in
+  let args = [
+    seg_source ();
+    seg_directive ()
+  ] in
+  match Post.args loc args with
+    | Post.Args actual ->
+      LocTest.assert_loc_equal ~ctxt loc actual.loc;
+      List.iter2 (assert_seg_equal ~ctxt) args actual.args
+
+let constr_args =
+  "Macro Arguments" >:: test_args
+
 (* Segments *)
 
 let fail_seg_expected expected actual =
@@ -490,48 +519,53 @@ let test_pp_dir_include ctxt =
 
 let test_pp_dir_define ctxt =
   let name = NameTest.name () in
-  let param = ParamTest.param ~name:(NameTest.name ~name:"param-one" ()) () in
-  let param' =
-    ParamTest.param
+  let params = MacroTest.params ~params:[
+    MacroTest.param ~name:(NameTest.name ~name:"param-one" ()) ();
+    MacroTest.param
       ~name:(NameTest.name ~name:"param-two" ())
       ~default:(Some (ValueTest.value ~value:"default-value" ()))
-      ()
-  in
-  let params = [param; param'] in
-  let single_line_body = ValueTest.value ~value:"a single line" () in
-  let multi_line_body = ValueTest.value ~value:"a \nmulti-line\n  body" () in
+      ();
+  ] () in
+  let body = MacroTest.body ~lines:[
+    MacroTest.line ~elems:[
+      MacroTest.elem_source ~value:(ValueTest.value ~value:"first source" ()) ();
+      MacroTest.elem_var ~name:(NameTest.name ~name:"x" ()) ();
+    ] ();
+    MacroTest.line ~elems:[
+      MacroTest.elem_source ~value:(ValueTest.value ~value:"second source" ()) ();
+      MacroTest.elem_var ~name:(NameTest.name ~name:"y" ()) ();
+    ] ()
+  ] () in
   ()
     |> dir_define ~name
     |> assert_pp_dir ~ctxt [
-         fprintf str_formatter "`define %t" (Post.pp_name name)
+         fprintf str_formatter "`define %t"
+           (Post.pp_name name)
            |> flush_str_formatter
        ];
   ()
-    |> dir_define ~name ~params
+    |> dir_define ~name ~params:(Some params)
     |> assert_pp_dir ~ctxt [
-         fprintf str_formatter "`define %t (%t, %t)"
+         fprintf str_formatter "`define %t(%t)"
            (Post.pp_name name)
-           (Post.pp_param param)
-           (Post.pp_param param')
+           (Post.pp_params params)
            |> flush_str_formatter
        ];
   ()
-    |> dir_define ~name ~body:(Some single_line_body)
+    |> dir_define ~name ~body:(Some body)
     |> assert_pp_dir ~ctxt [
-         fprintf str_formatter "`define %t (%t, %t) %t"
+         fprintf str_formatter "`define %t %t"
            (Post.pp_name name)
-           (Post.pp_param param)
-           (Post.pp_param param')
-           (Post.pp_value single_line_body)
+           (Post.pp_body body)
            |> flush_str_formatter
        ];
   ()
-    |> dir_define ~name ~params ~body:(Some multi_line_body)
+    |> dir_define ~name ~params:(Some params) ~body:(Some body)
     |> assert_pp_dir ~ctxt [
-         fprintf str_formatter "`define %t (%t, %t) a \\\n   multi-line\\\n  body"
+         fprintf str_formatter "`define %t(%t) %t"
            (Post.pp_name name)
-           (Post.pp_param param)
-           (Post.pp_param param')
+           (Post.pp_params params)
+           (Post.pp_body body)
            |> flush_str_formatter
        ]
 
@@ -552,9 +586,10 @@ let test_pp_dir_undefine_all ctxt =
 
 let test_pp_dir_macro ctxt =
   let name = NameTest.name () in
-  let arg = seg_source () in
-  let arg' = seg_directive () in
-  let args = [arg; arg'] in
+  let args = args ~args:[
+    seg_source ();
+    seg_directive ()
+  ] () in
   ()
     |> dir_macro ~name
     |> assert_pp_dir ~ctxt [
@@ -563,20 +598,11 @@ let test_pp_dir_macro ctxt =
            |> flush_str_formatter
        ];
   ()
-    |> dir_macro ~name ~args:[arg]
+    |> dir_macro ~name ~args:(Some args)
     |> assert_pp_dir ~ctxt [
-         fprintf str_formatter "`%t (%t)"
+         fprintf str_formatter "`%t(%t)"
            (Post.pp_name name)
-           (Post.pp_seg arg)
-           |> flush_str_formatter
-       ];
-  ()
-    |> dir_macro ~name ~args
-    |> assert_pp_dir ~ctxt [
-         fprintf str_formatter "`%t (%t, %t)"
-           (Post.pp_name name)
-           (Post.pp_seg arg)
-           (Post.pp_seg arg')
+           (Post.pp_args args)
            |> flush_str_formatter
        ]
 
@@ -782,6 +808,28 @@ let pp_dir =
       "End"   >:: test_pp_dir_end_keywords;
     ];
   ]
+
+(* Arguments *)
+
+let assert_pp_args = assert_pp Post.pp_args
+
+let test_pp_args ctxt =
+  let arg = seg_source () in
+  let arg' = seg_directive () in
+  ()
+    |> args
+    |> assert_pp_args ~ctxt [""];
+  ()
+    |> args ~args:[arg; arg']
+    |> assert_pp_args ~ctxt [
+         fprintf str_formatter "%t, %t"
+           (Post.pp_seg arg)
+           (Post.pp_seg arg')
+           |> flush_str_formatter
+       ]
+
+let pp_args =
+  "Macro Arguments" >:: test_pp_args
 
 (* Segments *)
 
