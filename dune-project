@@ -26,6 +26,7 @@
    menhir
    llvm
    (alt-ergo (= 2.2.0))
+   capnp
    odoc
    cmdliner
    ANSITerminal
