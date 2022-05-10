@@ -6,9 +6,13 @@ type token = private
   | SOURCE of string
   | PUNCT_SLASH
   | PUNCT_RPAREN
-  | PUNCT_LT
+  | PUNCT_RBRACKET
+  | PUNCT_RBRACE
+  | PUNCT_RANGLE
   | PUNCT_LPAREN
-  | PUNCT_GT
+  | PUNCT_LBRACKET
+  | PUNCT_LBRACE
+  | PUNCT_LANGLE
   | PUNCT_EQ
   | PUNCT_DQUOTE
   | PUNCT_COMMA
@@ -55,22 +59,37 @@ type token = private
 val eof : token
 (** [eof] constructs an end-of-file token. *)
 
+val newline : token
+(** [newline] constructs an newline token. *)
+
 (** {3 Punctuation} *)
 
 val punct_dquote : token
 (** [punct_dquote] constructs a double quote punctuation token. *)
 
-val punct_lt : token
-(** [punct_lt] constructs a less than punctuation token. *)
+val punct_langle : token
+(** [punct_langle] constructs a left angle bracket punctuation token. *)
 
-val punct_gt : token
-(** [punct_gt] constructs a greater than punctuation token. *)
+val punct_rangle : token
+(** [punct_rangle] constructs a right angle bracket punctuation token. *)
 
 val punct_lparen : token
 (** [punct_lparen] constructs a left parenthesis punctuation token. *)
 
 val punct_rparen : token
 (** [punct_rparen] constructs a right parenthesis punctuation token. *)
+
+val punct_lbracket : token
+(** [punct_lbracket] constructs a left bracket punctuation token. *)
+
+val punct_rbrace : token
+(** [punct_rbrace] constructs a right brace punctuation token. *)
+
+val punct_lbrace : token
+(** [punct_lbrace] constructs a left brace punctuation token. *)
+
+val punct_rbracket : token
+(** [punct_rbracket] constructs a right bracket punctuation token. *)
 
 val punct_comma : token
 (** [punct_comma] constructs a comma punctuation token. *)

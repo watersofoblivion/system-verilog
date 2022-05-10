@@ -30,15 +30,19 @@ let lexbuf_from_file path =
 (* Non-Printable *)
 
 let eof = Tokens.EOF
-let nl = Tokens.NEWLINE
+let newline = Tokens.NEWLINE
 
 (* Punctuation *)
 
 let punct_dquote = Tokens.PUNCT_DQUOTE
-let punct_lt = Tokens.PUNCT_LT
-let punct_gt = Tokens.PUNCT_GT
+let punct_langle = Tokens.PUNCT_LANGLE
+let punct_rangle = Tokens.PUNCT_RANGLE
 let punct_lparen = Tokens.PUNCT_LPAREN
 let punct_rparen = Tokens.PUNCT_RPAREN
+let punct_lbracket = Tokens.PUNCT_LBRACKET
+let punct_rbracket = Tokens.PUNCT_RBRACKET
+let punct_lbrace = Tokens.PUNCT_LBRACE
+let punct_rbrace = Tokens.PUNCT_RBRACE
 let punct_comma = Tokens.PUNCT_COMMA
 let punct_eq = Tokens.PUNCT_EQ
 let punct_slash = Tokens.PUNCT_SLASH

@@ -10,10 +10,14 @@
 /* Punctuation */
 
 %token PUNCT_DQUOTE
-%token PUNCT_LT "<"
-%token PUNCT_GT ">"
+%token PUNCT_LANGLE "<"
+%token PUNCT_RANGLE ">"
 %token PUNCT_LPAREN "("
 %token PUNCT_RPAREN ")"
+%token PUNCT_LBRACKET "["
+%token PUNCT_RBRACKET "]"
+%token PUNCT_LBRACE "{"
+%token PUNCT_RBRACE "}"
 %token PUNCT_COMMA ","
 %token PUNCT_EQ "="
 %token PUNCT_SLASH "/"

@@ -13,10 +13,14 @@ let token_printer = function
 
   (* Punctuation *)
   | Pre.PUNCT_DQUOTE -> "\""
-  | Pre.PUNCT_LT -> "\"<\""
-  | Pre.PUNCT_GT -> "\">\""
+  | Pre.PUNCT_LANGLE -> "\"<\""
+  | Pre.PUNCT_RANGLE -> "\">\""
   | Pre.PUNCT_LPAREN -> "\"(\""
   | Pre.PUNCT_RPAREN -> "\")\""
+  | Pre.PUNCT_LBRACKET -> "\"[\""
+  | Pre.PUNCT_RBRACKET -> "\"]\""
+  | Pre.PUNCT_LBRACE -> "\"{\""
+  | Pre.PUNCT_RBRACE -> "\"}\""
   | Pre.PUNCT_COMMA -> "\",\""
   | Pre.PUNCT_EQ -> "\"=\""
   | Pre.PUNCT_SLASH -> "\"/\""
@@ -69,10 +73,14 @@ let assert_token_equal ~ctxt expected actual = match expected, actual with
 
   (* Punctuation *)
   | Pre.PUNCT_DQUOTE, Pre.PUNCT_DQUOTE
-  | Pre.PUNCT_LT, Pre.PUNCT_LT
-  | Pre.PUNCT_GT, Pre.PUNCT_GT
+  | Pre.PUNCT_LANGLE, Pre.PUNCT_LANGLE
+  | Pre.PUNCT_RANGLE, Pre.PUNCT_RANGLE
   | Pre.PUNCT_LPAREN, Pre.PUNCT_LPAREN
   | Pre.PUNCT_RPAREN, Pre.PUNCT_RPAREN
+  | Pre.PUNCT_LBRACKET, Pre.PUNCT_LBRACKET
+  | Pre.PUNCT_RBRACKET, Pre.PUNCT_RBRACKET
+  | Pre.PUNCT_LBRACE, Pre.PUNCT_LBRACE
+  | Pre.PUNCT_RBRACE, Pre.PUNCT_RBRACE
   | Pre.PUNCT_COMMA, Pre.PUNCT_COMMA
   | Pre.PUNCT_EQ, Pre.PUNCT_EQ
   | Pre.PUNCT_SLASH, Pre.PUNCT_SLASH -> ()
@@ -128,6 +136,71 @@ let assert_token_equal ~ctxt expected actual = match expected, actual with
 let test_eof _ =
   match Pre.eof with
     | Pre.EOF -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_newline _ =
+  match Pre.newline with
+    | Pre.NEWLINE -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_dquote _ =
+  match Pre.punct_dquote with
+    | Pre.PUNCT_DQUOTE -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_langle _ =
+  match Pre.punct_langle with
+    | Pre.PUNCT_LANGLE -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_rangle _ =
+  match Pre.punct_rangle with
+    | Pre.PUNCT_RANGLE -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_lparen _ =
+  match Pre.punct_lparen with
+    | Pre.PUNCT_LPAREN -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_rparen _ =
+  match Pre.punct_rparen with
+    | Pre.PUNCT_RPAREN -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_lbracket _ =
+  match Pre.punct_lbracket with
+    | Pre.PUNCT_LBRACKET -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_rbracket _ =
+  match Pre.punct_rbracket with
+    | Pre.PUNCT_RBRACKET -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_lbrace _ =
+  match Pre.punct_lbrace with
+    | Pre.PUNCT_LBRACE -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_rbrace _ =
+  match Pre.punct_rbrace with
+    | Pre.PUNCT_RBRACE -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_comma _ =
+  match Pre.punct_comma with
+    | Pre.PUNCT_COMMA -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_eq _ =
+  match Pre.punct_eq with
+    | Pre.PUNCT_EQ -> ()
+    | _ -> assert_failure "Tokens are not equal"
+
+let test_punct_slash _ =
+  match Pre.punct_slash with
+    | Pre.PUNCT_SLASH -> ()
     | _ -> assert_failure "Tokens are not equal"
 
 let test_source ctxt =
@@ -365,7 +438,30 @@ let test_net ctxt =
 let suite =
   "Tokens" >::: [
     "Punctuation" >::: [
-      "End-of-File" >:: test_eof;
+      "Non-Printable" >::: [
+        "End-of-File" >:: test_eof;
+        "New Line"    >:: test_newline;
+      ];
+      "Double Quote" >:: test_punct_dquote;
+      "Angle Brackets" >::: [
+        "Left"  >:: test_punct_langle;
+        "Right" >:: test_punct_rangle;
+      ];
+      "Parenthesis" >::: [
+        "Left"  >:: test_punct_lparen;
+        "Right" >:: test_punct_rparen;
+      ];
+      "Square Brackets" >::: [
+        "Left"  >:: test_punct_lbracket;
+        "Right" >:: test_punct_rbracket;
+      ];
+      "Curly Braces" >::: [
+        "Left"  >:: test_punct_lbrace;
+        "Right" >:: test_punct_rbrace;
+      ];
+      "Comma"  >:: test_punct_comma;
+      "Equals" >:: test_punct_eq;
+      "Slash"  >:: test_punct_slash;
     ];
     "Source" >:: test_source;
     "Directives" >::: [
