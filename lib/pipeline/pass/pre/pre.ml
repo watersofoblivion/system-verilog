@@ -2,12 +2,13 @@
 
 module Menhir = Parser.MenhirInterpreter
 
+include Tokens
 include Lexer
 include Env
 
 (* Tokenizers *)
 
-let main_tokenizer = Sedlexing.with_tokenizer Lexer.lex_main
+let main_tokenizer = Sedlexing.with_tokenizer Lexer.lex_src
 
 (* Higher-order Helpers *)
 

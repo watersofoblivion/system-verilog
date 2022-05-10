@@ -1,4 +1,16 @@
 (menhir
+  (modules tokens)
+  (flags
+    --strict
+    --explain
+    --dump
+    --dump-resolved
+    --no-dollars
+    --table
+    --inspection
+    --only-tokens))
+
+(menhir
   (modules
     common
     tokens
@@ -12,7 +24,8 @@
     --dump-resolved
     --no-dollars
     --table
-    --inspection))
+    --inspection
+    --external-tokens Tokens))
 
 (library
  (name pre)
