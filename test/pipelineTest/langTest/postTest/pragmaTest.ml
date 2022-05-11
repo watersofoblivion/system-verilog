@@ -43,8 +43,8 @@ let rec assert_pragma_value_equal ~ctxt expected actual = match expected, actual
 and assert_pragma_expr_equal ~ctxt expected actual = match expected, actual with
   | Post.PragmaExpr expected, Post.PragmaExpr actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    assert_optional_equal ~ctxt "pragma value" NameTest.assert_name_equal expected.kwd actual.kwd;
-    assert_optional_equal ~ctxt "pragma value" assert_pragma_value_equal expected.value actual.value
+    assert_optional_equal ~ctxt "keywords" NameTest.assert_name_equal expected.kwd actual.kwd;
+    assert_optional_equal ~ctxt "values" assert_pragma_value_equal expected.value actual.value
 
 (* Constructors *)
 
@@ -57,8 +57,14 @@ let fail_pragma_value_expected expected actual =
 let test_pragma_value_exprs ctxt =
   let loc = LocTest.gen () in
   let exprs = [
-    pragma_expr ~kwd:(Some (NameTest.name ~name:"first" ())) ();
-    pragma_expr ~kwd:(Some (NameTest.name ~name:"second" ())) ();
+    pragma_expr
+      ~kwd:(Some (NameTest.name ~name:"first" ()))
+      ~value:(Some (pragma_value_num ~value:(ValueTest.value ~value:"42" ()) ()))
+      ();
+    pragma_expr
+      ~kwd:(Some (NameTest.name ~name:"second" ()))
+      ~value:(Some (pragma_value_string ~value:(ValueTest.value ~value:"a string" ()) ()))
+      ();
   ] in
   match Post.pragma_value_exprs loc exprs with
     | Post.PragmaValueExprs actual ->
@@ -92,6 +98,12 @@ let test_pragma_value_ident ctxt =
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
       NameTest.assert_name_equal ~ctxt name actual.name
     | actual -> fail_pragma_value_expected "ident" actual
+
+let fail_pragma_expr_expected expected actual =
+  str_formatter
+    |> dprintf "Pragma expressions are not equal: expected %s, found %t" expected (Post.pp_pragma_expr actual)
+    |> flush_str_formatter
+    |> assert_failure
 
 let test_pragma_expr ctxt =
   let loc = LocTest.gen () in
@@ -213,5 +225,5 @@ let pp =
       "Strings"     >:: test_pp_pragma_value_string;
       "Identifiers" >:: test_pp_pragma_value_ident;
     ];
-    "Expressions" >:: test_pp_pragma_expr;
+    "Expressions" >::  test_pp_pragma_expr;
   ]

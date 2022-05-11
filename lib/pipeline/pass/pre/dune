@@ -14,9 +14,17 @@
   (modules
     common
     tokens
-    compilationUnit)
+    name
+    value
+    macro
+    incl
+    timescale
+    pragma
+    dir
+    seg
+    file)
   (merge_into parser)
-  (infer false)
+  ;(infer false)
   (flags
     --strict
     --explain

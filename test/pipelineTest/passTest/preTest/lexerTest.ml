@@ -8,7 +8,7 @@ let assert_lexes ~ctxt lexer lines =
   let lexbuf =
     lines
       |> String.concat "\n"
-      |> Pre.lexbuf_from_string
+      |> Pre.lexbuf_of_string
   in
   let assert_lexes expected =
     lexbuf
@@ -17,7 +17,7 @@ let assert_lexes ~ctxt lexer lines =
   in
   List.iter assert_lexes
 
-(* Source Lexer *)
+(* Source Code *)
 
 let assert_lexes_src = assert_lexes Pre.lex_src
 
@@ -178,6 +178,21 @@ let test_lexes_dir_begin_keywords ctxt =
 let test_lexes_dir_end_keywords ctxt =
   assert_lexes_dir ~ctxt ["end_keywords"] [Pre.dir_end_keywords]
 
+let test_lexes_dir_error _ =
+  try
+    let _ =
+      "!@#$%^&"
+        |> Pre.lexbuf_of_string
+        |> Pre.lex_dir
+    in
+    (* Can't use assert_raises because lexbuf contains functions *)
+    assert_failure "Expected LexDirError exception"
+  with
+    | Pre.LexDirError _ -> ()
+    | exn -> raise exn
+
+(* Test Suite *)
+
 let suite =
   "Lexers" >::: [
     "Source Code" >::: [
@@ -227,5 +242,6 @@ let suite =
         "Begin" >:: test_lexes_dir_begin_keywords;
         "End"   >:: test_lexes_dir_end_keywords;
       ];
+      "Error" >:: test_lexes_dir_error;
     ];
   ]

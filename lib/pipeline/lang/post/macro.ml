@@ -20,6 +20,9 @@ type line =
 type body =
   | Body of { loc: Loc.t; lines: line list }
 
+type args =
+  | Args of { loc: Loc.t; args: Value.value list }
+
 let param loc name default = Param { loc; name; default }
 
 let params loc params = Params { loc; params }
@@ -30,6 +33,8 @@ let elem_var loc name = ElemVar { loc; name }
 let line loc elems = Line { loc; elems }
 
 let body loc lines = Body { loc; lines }
+
+let args loc args = Args { loc; args }
 
 let pp_param param =
   let pp fmt value = match value with
@@ -67,3 +72,11 @@ let pp_body body =
   let pp fmt line = pp_line line fmt in
   match body with
     | Body body -> dprintf "%a" (pp_print_list ~pp_sep pp) body.lines
+
+let pp_args args =
+  let pp fmt arg = Value.pp_value arg fmt in
+  match args with
+    | Args args ->
+      let pp_sep fmt _ = fprintf fmt ", " in
+      dprintf "%a"
+        (pp_print_list ~pp_sep pp) args.args

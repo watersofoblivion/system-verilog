@@ -60,6 +60,26 @@ type body =
     } (** Body *)
 (** A macro body *)
 
+type args = private
+  | Args of {
+      loc:  Loc.t;    (** Source location *)
+      args: value list; (** Arguments *)
+    } (** Arguments **)
+(** Macro arguments *)
+
+type incl = private
+  | IncludePath of {
+      loc:  Loc.t; (** Source location *)
+      sys:  bool;  (** Whether to only search the system paths *)
+      path: value; (** Path to import *)
+    } (** A path *)
+  | IncludeMacro of {
+      loc:  Loc.t;       (** Source location *)
+      name: name;        (** Macro name *)
+      args: args option; (** Macro arguments *)
+    } (** A macro value *)
+(** Include values *)
+
 type mag = private
   | Magnitude1 of {
       loc: Loc.t; (** Source location *)
@@ -95,9 +115,9 @@ type yoonit = private
 
 type scale = private
   | Scale of {
-      loc:    Loc.t;  (** Source location *)
-      mag:    mag;    (** Magnitude *)
-      yoonit: yoonit; (** Time unit *)
+      loc:    Loc.t; (** Source location *)
+      mag:    value; (** Magnitude *)
+      yoonit: value; (** Time unit *)
     } (** A period of time *)
 (** A period of time *)
 
@@ -203,20 +223,7 @@ type keywords = private
     } (** IEEE 1800-2012 *)
 (** Supported sets of keywords *)
 
-type incl = private
-  | IncludePath of {
-      loc:  Loc.t; (** Source location *)
-      sys:  bool;  (** Whether to only search the system paths *)
-      path: value; (** Path to import *)
-    } (** A path *)
-  | IncludeMacro of {
-      loc:  Loc.t;       (** Source location *)
-      name: name;        (** Macro name *)
-      args: args option; (** Macro arguments *)
-    } (** A macro value *)
-(** Include values *)
-
-and dir = private
+type dir = private
   | DirResetAll of {
       loc: Loc.t; (** Source location *)
     } (** Reset all directives *)
@@ -266,12 +273,12 @@ and dir = private
       prec:   scale option; (** The time precision *)
     } (** Set the default time scale. *)
   | DirDefaultNetType of {
-      loc: Loc.t;      (** Source location *)
-      net: net option; (** The net type to use as the default *)
+      loc: Loc.t; (** Source location *)
+      net: name;  (** The net type to use as the default *)
     } (** Default Net Type *)
   | DirUnconnectedDrive of {
       loc:   Loc.t; (** Source location *)
-      drive: drive; (** The direction to drive unconnected ports *)
+      drive: name;  (** The direction to drive unconnected ports *)
     } (** Drive Unconnected Ports *)
   | DirNoUnconnectedDrive of {
       loc: Loc.t; (** Source location *)
@@ -284,13 +291,14 @@ and dir = private
     } (** Stop tagging modules as cell modules *)
   | DirPragma of {
       loc:   Loc.t;            (** Source location *)
+      name:  name;             (** Pragma name *)
       exprs: pragma_expr list; (** Expressions *)
     } (** Pragma *)
   | DirLine of {
-      loc:    Loc.t;        (** Source location *)
-      number: int;          (** Line number *)
-      path:   value;        (** Source file *)
-      level:  level option; (** Line level *)
+      loc:    Loc.t; (** Source location *)
+      number: value; (** Line number *)
+      path:   value; (** Source file *)
+      level:  value; (** Line level *)
     } (** Override the current location *)
   | DirFILE of {
       loc: Loc.t; (** Source location *)
@@ -299,21 +307,14 @@ and dir = private
       loc: Loc.t; (** Source location *)
     } (** The current line number *)
   | DirBeginKeywords of {
-      loc:      Loc.t;    (** Source location *)
-      keywords: keywords; (** The keywords to use *)
+      loc:      Loc.t; (** Source location *)
+      keywords: value; (** The keywords to use *)
     } (** Use a specific set of keywords *)
   | DirEndKeywords of {
       loc: Loc.t; (** Source location *)
     } (** Stop using a specific set of keywords *)
 
-and args = private
-  | Args of {
-      loc:  Loc.t;    (** Source location *)
-      args: seg list; (** Arguments *)
-    } (** Arguments **)
-(** Macro arguments *)
-
-and seg = private
+type seg = private
   | SegSource of {
       loc: Loc.t;  (** Source location *)
       src: string; (** The source text *)
@@ -381,7 +382,7 @@ val body : Loc.t -> line list -> body
 
 (** {4 Arguments} *)
 
-val args : Loc.t -> seg list -> args
+val args : Loc.t -> value list -> args
 (** [args loc args] constructs a list of macro arguments at [loc] with the
     arguments [args]. *)
 
@@ -432,7 +433,7 @@ val unit_fs : Loc.t -> yoonit
 
 (** {4 Scales} *)
 
-val scale : Loc.t -> mag -> yoonit -> scale
+val scale : Loc.t -> value -> value -> scale
 (** [scale loc mag yoonit] constructs a scale of [mag] [yoonit]s at location
     [loc]. *)
 
@@ -499,8 +500,8 @@ val pragma_value_ident : Loc.t -> name -> pragma_value
 (** {4 Pragma Expressions} *)
 
 val pragma_expr : Loc.t -> name option -> pragma_value option -> pragma_expr
-(** [pragma_expr loc kwd value] constrcuts a pragma expression at location [loc]
-    with the keyword [kwd] and the value [value]. *)
+(** [pragma_expr_kwd loc kwd value] constrcuts a pragma expression at location
+    [loc] named by the keyword [kwd] with the value [value]. *)
 
 (** {3 Line Levels} *)
 
@@ -592,13 +593,14 @@ val dir_timescale : Loc.t -> scale -> scale option -> dir
     precision [time_prec].  If [time_prec] is [None], [time_unit] is used as the
     time precision. *)
 
-val dir_default_net_type : Loc.t -> net option -> dir
+val dir_default_net_type : Loc.t -> name -> dir
 (** [dir_default_net_type loc net_type] construcs a default net type directive
     at location [loc] that sets the default net type to [net_type]. *)
 
-val dir_unconnected_drive : Loc.t -> drive -> dir
+val dir_unconnected_drive : Loc.t -> name -> dir
 (** [dir_unconnected_drive loc drive] constructs an unconnected drive directive
-    at location [loc] that sets unconnected pins to drive as specified in [drive]. *)
+    at location [loc] that sets unconnected pins to drive as specified in
+    [drive]. *)
 
 val dir_no_unconnected_drive : Loc.t -> dir
 (** [dir_no_unconnected_drive loc] constructs a no unconnected drive directive
@@ -613,11 +615,11 @@ val dir_end_cell_define : Loc.t -> dir
 (** [dir_end_cell_define loc] constructs an end cell define directive at
     location [loc] that stops taging subsequent modules as cell modules. *)
 
-val dir_pragma : Loc.t -> pragma_expr list -> dir
-(** [dir_pragma loc exprs] constructs a pragma directive at location [loc] with
-    the pragma expressions [exprs]. *)
+val dir_pragma : Loc.t -> name -> pragma_expr list -> dir
+(** [dir_pragma loc name exprs] constructs a pragma directive at location [loc]
+    with the name [name] and the pragma expressions [exprs]. *)
 
-val dir_line : Loc.t -> int -> value -> level option -> dir
+val dir_line : Loc.t -> value -> value -> value -> dir
 (** [dir_line number loc path level] constructs a line directive at location
     [loc] that overrides the current program location to be line [number] in
     [path].  If [level] is not [None], it determines whether an include was just
@@ -631,7 +633,7 @@ val dir_FILE : Loc.t -> dir
 (** [dir_FILE loc] constructs a FILE directive at location [loc] that expands to
     the name of the current file. *)
 
-val dir_begin_keywords : Loc.t -> keywords -> dir
+val dir_begin_keywords : Loc.t -> value -> dir
 (** [dir_begin_keywords loc keywords] constructs a begin keywords directive at
     location [loc] that sets the set of keywords in use for the subsequent
     source. *)

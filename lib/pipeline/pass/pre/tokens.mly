@@ -22,6 +22,12 @@
 %token PUNCT_EQ "="
 %token PUNCT_SLASH "/"
 
+/* Macros */
+
+%token <string> DEFAULT
+%token <string> LINE
+%token LINE_SEP
+
 /* Directives */
 
 %token DIR_RESET_ALL "`resetall"
@@ -48,19 +54,11 @@
 %token DIR_BEGIN_KEYWORDS "`begin_keywords"
 %token DIR_END_KEYWORDS "`end_keywords"
 
-/* Net Types */
+/* General */
 
-%token NET_TYPE_WIRE "wire"
-%token NET_TYPE_TRI "tri"
-%token NET_TYPE_TRI_0 "tri0"
-%token NET_TYPE_TRI_1 "tri1"
-%token NET_TYPE_W_AND "wand"
-%token NET_TYPE_TRI_AND "triand"
-%token NET_TYPE_W_OR "wor"
-%token NET_TYPE_TRI_OR "trior"
-%token NET_TYPE_TRI_REG "trireg"
-%token NET_TYPE_U_WIRE "uwire"
-%token NET_TYPE_NONE "none"
+%token <string> IDENT
+%token <string> NUMBER
+%token <string> STRING
 
 /* Source Code */
 

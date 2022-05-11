@@ -19,7 +19,7 @@ let unit_ns ?loc:(loc = LocTest.gen ()) _ = Post.unit_ns loc
 let unit_ps ?loc:(loc = LocTest.gen ()) _ = Post.unit_ps loc
 let unit_fs ?loc:(loc = LocTest.gen ()) _ = Post.unit_fs loc
 
-let scale ?loc:(loc = LocTest.gen ()) ?mag:(mag = mag_1 ()) ?yoonit:(yoonit = unit_ns ()) _ =
+let scale ?loc:(loc = LocTest.gen ()) ?mag:(mag = ValueTest.value ~value:"mag" ()) ?yoonit:(yoonit = ValueTest.value ~value:"yoonit" ()) _ =
   Post.scale loc mag yoonit
 
 (* Assertions *)
@@ -42,8 +42,8 @@ let assert_yoonit_equal ~ctxt expected actual = match expected, actual with
 let assert_scale_equal ~ctxt expected actual = match expected, actual with
   | Post.Scale expected, Post.Scale actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    assert_mag_equal ~ctxt expected.mag actual.mag;
-    assert_yoonit_equal ~ctxt expected.yoonit actual.yoonit
+    ValueTest.assert_value_equal ~ctxt expected.mag actual.mag;
+    ValueTest.assert_value_equal ~ctxt expected.yoonit actual.yoonit
 
 (* Constructors *)
 
@@ -127,13 +127,13 @@ let fail_scale_expected expected actual =
 
 let test_scale ctxt =
   let loc = LocTest.gen () in
-  let mag = mag_1 () in
-  let yoonit = unit_s () in
+  let mag = ValueTest.value ~value:"mag" () in
+  let yoonit = ValueTest.value ~value:"yoonit" () in
   match Post.scale loc mag yoonit with
     | Post.Scale actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      assert_mag_equal ~ctxt mag actual.mag;
-      assert_yoonit_equal ~ctxt yoonit actual.yoonit
+      ValueTest.assert_value_equal ~ctxt mag actual.mag;
+      ValueTest.assert_value_equal ~ctxt yoonit actual.yoonit
 
 let constr =
   "Timescales" >::: [
@@ -213,9 +213,16 @@ let test_pp_unit_fs ctxt =
 let assert_pp_scale = assert_pp Post.pp_scale
 
 let test_pp_scale ctxt =
+  let mag = ValueTest.value ~value:"mag" () in
+  let yoonit = ValueTest.value ~value:"yoonit" () in
   ()
-    |> scale ~mag:(mag_100 ()) ~yoonit:(unit_ns ())
-    |> assert_pp_scale ~ctxt ["100ns"]
+    |> scale ~mag ~yoonit
+    |> assert_pp_scale ~ctxt [
+         fprintf str_formatter "%t%t"
+           (Post.pp_value mag)
+           (Post.pp_value yoonit)
+             |> flush_str_formatter
+       ]
 
 let pp =
   "Timescales" >::: [

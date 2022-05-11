@@ -3,6 +3,7 @@
 (** {2 Tokens} *)
 
 type token = private
+  | STRING
   | SOURCE of string
   | PUNCT_SLASH
   | PUNCT_RPAREN
@@ -16,18 +17,11 @@ type token = private
   | PUNCT_EQ
   | PUNCT_DQUOTE
   | PUNCT_COMMA
+  | NUMBER of string
   | NEWLINE
-  | NET_TYPE_W_OR
-  | NET_TYPE_W_AND
-  | NET_TYPE_WIRE
-  | NET_TYPE_U_WIRE
-  | NET_TYPE_TRI_REG
-  | NET_TYPE_TRI_OR
-  | NET_TYPE_TRI_AND
-  | NET_TYPE_TRI_1
-  | NET_TYPE_TRI_0
-  | NET_TYPE_TRI
-  | NET_TYPE_NONE
+  | LINE_SEP
+  | LINE of string
+  | IDENT of string
   | EOF
   | DIR_UNDEFINE_ALL
   | DIR_UNDEF
@@ -52,6 +46,7 @@ type token = private
   | DIR_DEFAULT_NET_TYPE
   | DIR_CELL_DEFINE
   | DIR_BEGIN_KEYWORDS
+  | DEFAULT of string
 (** Tokens *)
 
 (** {3 Non-Printable} *)
@@ -181,58 +176,61 @@ val dir_begin_keywords : token
 val dir_end_keywords : token
 (** [dir_end_keywords] constructs a end keywords directive token. *)
 
-(** {3 Net Types} *)
+(** {3 General} *)
 
-val net : string -> token
-(** [dir lexeme] constructs a net type from the contents of the lexeme [lexeme]. *)
+val number : string -> token
+(** [number lexeme] constructs a number token with the lexeme [lexeme]. *)
 
-val net_wire : token
-(** [net_wire] constructs a wire net type token. *)
-
-val net_tri : token
-(** [net_tri] constructs a tri net type token. *)
-
-val net_tri_0 : token
-(** [net_tri_0] constructs a tri0 net type token. *)
-
-val net_tri_1 : token
-(** [net_tri_1] constructs a tri1 net type token. *)
-
-val net_w_and : token
-(** [net_w_and] constructs a wand net type token. *)
-
-val net_tri_and : token
-(** [net_tri_and] constructs a triand net type token. *)
-
-val net_w_or : token
-(** [net_w_or] constructs a wor net type token. *)
-
-val net_tri_or : token
-(** [net_tri_or] constructs a trior net type token. *)
-
-val net_tri_reg : token
-(** [net_tri_reg] constructs a trireg net type token. *)
-
-val net_u_wire : token
-(** [net_u_wire] constructs a uwire net type token. *)
-
-val net_none : token
-(** [net_none] constructs a none net type token. *)
+val ident : string -> token
+(** [ident lexeme] constructs an identifier token with the lexeme [lexeme]. *)
 
 (** {2 Lexing Buffers} *)
 
-val lexbuf_from_string : string -> Sedlexing.lexbuf
-(** [lexbuf_from_string src] constructs a lexing buffer from the string [src]. *)
+val lexbuf_of_string : string -> Sedlexing.lexbuf
+(** [lexbuf_of_string src] constructs a lexing buffer from the string [src]. *)
 
-val lexbuf_from_file : Fpath.t -> Sedlexing.lexbuf
-(** [lexbuf_from_file path] constructs a lexing buffer reading from the file
+val lexbuf_of_file : Fpath.t -> Sedlexing.lexbuf
+(** [lexbuf_of_file path] constructs a lexing buffer reading from the file
     [path]. *)
 
 (** {2 Lexers} *)
 
+(** {3 Source Code} *)
+
+exception LexSourceError of {
+  lexbuf: Sedlexing.lexbuf; (** The current lexing buffer *)
+}
+(** Raised if the lexer encounters an error lexing general source code.  This
+    case should be impossible, so seeing this exception indicates a compiler
+    bug. *)
+
+exception LexSourceCommentError of {
+  lexbuf: Sedlexing.lexbuf; (** The current lexing buffer *)
+  multi:  bool;             (** Whether or not this was a multi-line comment (I.e., the [/* ... */] syntax.) *)
+}
+(** Raised if the lexer encounters an error lexing a comment in general source
+    code.  This case should be impossible, so seeing this exception indicates a
+    compiler bug. *)
+
+exception LexSourceStringError of {
+  lexbuf: Sedlexing.lexbuf; (** The current lexing buffer *)
+}
+(** Raised if the lexer encounters an error lexing a string in general source
+    code.  This case should be impossible, so seeing this exception indicates a
+    compiler bug. *)
+
 val lex_src : Sedlexing.lexbuf -> token
 (** [lex_src buf lexbuf] lexes source code from the lexing buffer [lexbuf] until
-    a compiler directive is encountered. *)
+    a compiler directive is encountered.  Raises {!LexSourceError},
+    {!LexSourceCommentError}, or {!LexSourceStringError} if the lexer encounters
+    and error. *)
+
+(** {3 Directives} *)
+
+exception LexDirError of {
+  lexbuf: Sedlexing.lexbuf (** The current lexing buffer *)
+}
+(** Raised if the lexer cannot recognize a valid directive or macro name. *)
 
 val lex_dir : Sedlexing.lexbuf -> token
 (** [lex_dir buf lexbuf] lexes a directive or macro name. *)
@@ -247,9 +245,79 @@ val empty : env
 
 (** {2 Entry Points} *)
 
-val compilation_unit : Fpath.t -> env -> (env -> Post.t -> 'a) -> 'a
-(** [compilation_unit path env kontinue] parses the file located at path [path]
+val parse_file : Fpath.t -> env -> (env -> Post.file -> 'a) -> 'a
+(** [parse_file path env kontinue] parses the file located at path [path]
     in the environment [env] and passes an environment and the parsed file to
     the continuation [kontinue]. *)
 
 (** {2 Unit Test Entry Points} *)
+
+val parse_ident : Sedlexing.lexbuf -> env -> (env -> Post.name -> 'a) -> 'a
+(** [parse_ident lexbuf env kontinue] parses an identifier from [lexbuf] in the
+    environment [env] and passes an environment and the parsed identifier to the
+    continuation [kontinue]. *)
+
+val parse_lit_num : Sedlexing.lexbuf -> env -> (env -> Post.value -> 'a) -> 'a
+(** [parse_lit_num lexbuf env kontinue] parses an numeric literal from [lexbuf]
+    in the environment [env] and passes an environment and the parsed numeric
+    literal to the continuation [kontinue]. *)
+
+val parse_lit_str : Sedlexing.lexbuf -> env -> (env -> Post.value -> 'a) -> 'a
+(** [parse_lit_str lexbuf env kontinue] parses an string literal from [lexbuf]
+    in the environment [env] and passes an environment and the parsed string
+    literal to the continuation [kontinue]. *)
+
+val parse_params : Sedlexing.lexbuf -> env -> (env -> Post.params -> 'a) -> 'a
+(** [parse_params lexbuf env kontinue] parses a macro parameter list from
+    [lexbuf] in the environment [env] and passes an environment and the parsed
+    macro parameter list to the continuation [kontinue]. *)
+
+val parse_param : Sedlexing.lexbuf -> env -> (env -> Post.param -> 'a) -> 'a
+(** [parse_param lexbuf env kontinue] parses a macro parameter from [lexbuf] in
+    the environment [env] and passes an environment and the parsed macro
+    parameter to the continuation [kontinue]. *)
+
+val parse_elem : Sedlexing.lexbuf -> env -> (env -> Post.elem -> 'a) -> 'a
+(** [parse_elem lexbuf env kontinue] parses a macro body line element from
+    [lexbuf] in the environment [env] and passes an environment and the parsed
+    macro body line element to the continuation [kontinue]. *)
+
+val parse_line : Sedlexing.lexbuf -> env -> (env -> Post.line -> 'a) -> 'a
+(** [parse_line lexbuf env kontinue] parses a macro body line from [lexbuf] in
+    the environment [env] and passes an environment and the parsed macro body
+    line to the continuation [kontinue]. *)
+
+val parse_body : Sedlexing.lexbuf -> env -> (env -> Post.body -> 'a) -> 'a
+(** [parse_body lexbuf env kontinue] parses a macro body from [lexbuf] in the
+    environment [env] and passes an environment and the parsed macro body to the
+    continuation [kontinue]. *)
+
+val parse_args : Sedlexing.lexbuf -> env -> (env -> Post.args -> 'a) -> 'a
+(** [parse_args lexbuf env kontinue] parses a macro arguments list from
+    [lexbuf] in the environment [env] and passes an environment and the parsed
+    macro arguments list to the continuation [kontinue]. *)
+
+val parse_incl : Sedlexing.lexbuf -> env -> (env -> Post.incl -> 'a) -> 'a
+(** [parse_incl lexbuf env kontinue] parses an include source from [lexbuf] in
+    the environment [env] and passes an environment and the parsed include
+    source to the continuation [kontinue]. *)
+
+val parse_pragma_value : Sedlexing.lexbuf -> env -> (env -> Post.pragma_value -> 'a) -> 'a
+(** [parse_pragma_value lexbuf env kontinue] parses a pragma value from [lexbuf]
+    in the environment [env] and passes an environment and the parsed pragma
+    value to the continuation [kontinue]. *)
+
+val parse_pragma_expr : Sedlexing.lexbuf -> env -> (env -> Post.pragma_expr -> 'a) -> 'a
+(** [parse_pragma_expr lexbuf env kontinue] parses a pragma expression from
+    [lexbuf] in the environment [env] and passes an environment and the parsed
+    pragma expression to the continuation [kontinue]. *)
+
+val parse_dir : Sedlexing.lexbuf -> env -> (env -> Post.dir -> 'a) -> 'a
+(** [parse_dir lexbuf env kontinue] parses a directive from [lexbuf] in the
+    environment [env] and passes an environment and the parsed directive to the
+    continuation [kontinue]. *)
+
+val parse_seg : Sedlexing.lexbuf -> env -> (env -> Post.seg -> 'a) -> 'a
+(** [parse_seg lexbuf env kontinue] parses a segment from [lexbuf] in the
+    environment [env] and passes an environment and the parsed directive to the
+    continuation [kontinue]. *)

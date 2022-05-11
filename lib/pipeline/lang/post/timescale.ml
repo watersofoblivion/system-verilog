@@ -18,7 +18,7 @@ type yoonit =
   | UnitFs of { loc: Loc.t }
 
 type scale =
-  | Scale of { loc: Loc.t; mag: mag; yoonit: yoonit }
+  | Scale of { loc: Loc.t; mag: Value.value; yoonit: Value.value }
 
 let mag_1 loc = Magnitude1 { loc }
 let mag_10 loc = Magnitude10 { loc }
@@ -48,4 +48,4 @@ let pp_yoonit = function
 
 let pp_scale = function
   | Scale scale ->
-    dprintf "%t%t" (pp_mag scale.mag) (pp_yoonit scale.yoonit)
+    dprintf "%t%t" (Value.pp_value scale.mag) (Value.pp_value scale.yoonit)

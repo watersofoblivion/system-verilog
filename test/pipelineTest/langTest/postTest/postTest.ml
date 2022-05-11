@@ -3,13 +3,15 @@ open OUnit2
 include NameTest
 include ValueTest
 include MacroTest
+include InclTest
 include TimescaleTest
 include NetTest
 include DriveTest
 include PragmaTest
 include LevelTest
 include KeywordsTest
-include DirArgSegTest
+include DirTest
+include SegTest
 
 let suite =
   "Post-Processed Compilation Unit" >::: [
@@ -17,16 +19,15 @@ let suite =
       NameTest.constr;
       ValueTest.constr;
       MacroTest.constr;
+      InclTest.constr;
       TimescaleTest.constr;
       NetTest.constr;
       DriveTest.constr;
       PragmaTest.constr;
       LevelTest.constr;
       KeywordsTest.constr;
-      DirArgSegTest.constr_incl;
-      DirArgSegTest.constr_dir;
-      DirArgSegTest.constr_args;
-      DirArgSegTest.constr_seg;
+      DirTest.constr;
+      SegTest.constr;
       FileTest.constr;
       CompilationUnitTest.constr;
     ];
@@ -34,16 +35,15 @@ let suite =
       NameTest.pp;
       ValueTest.pp;
       MacroTest.pp;
+      InclTest.pp;
       TimescaleTest.pp;
       NetTest.pp;
       DriveTest.pp;
       PragmaTest.pp;
       LevelTest.pp;
       KeywordsTest.pp;
-      DirArgSegTest.pp_incl;
-      DirArgSegTest.pp_dir;
-      DirArgSegTest.pp_args;
-      DirArgSegTest.pp_seg;
+      DirTest.pp;
+      SegTest.pp;
       FileTest.pp;
       CompilationUnitTest.pp;
     ];

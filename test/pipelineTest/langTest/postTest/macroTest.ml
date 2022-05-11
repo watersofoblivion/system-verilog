@@ -26,6 +26,9 @@ let line ?loc:(loc = LocTest.gen ()) ?elems:(elems = []) _ =
 let body ?loc:(loc = LocTest.gen ()) ?lines:(lines = []) _ =
   Post.body loc lines
 
+let args ?loc:(loc = LocTest.gen ()) ?args:(args = []) _ =
+  Post.args loc args
+
 (* Assertions *)
 
 let assert_param_equal ~ctxt expected actual = match expected, actual with
@@ -57,6 +60,11 @@ let assert_body_equal ~ctxt expected actual = match expected, actual with
   | Post.Body expected, Post.Body actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
     List.iter2 (assert_line_equal ~ctxt) expected.lines actual.lines
+
+let assert_args_equal ~ctxt expected actual = match expected, actual with
+  | Post.Args expected, Post.Args actual ->
+    LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
+    List.iter2 (ValueTest.assert_value_equal ~ctxt) expected.args actual.args
 
 (* Constructors *)
 
@@ -143,6 +151,19 @@ let test_body ctxt =
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
       List.iter2 (assert_line_equal ~ctxt) lines actual.lines
 
+(* Arguments *)
+
+let test_args ctxt =
+  let loc = LocTest.gen () in
+  let args = [
+    ValueTest.value ~value:"first" ();
+    ValueTest.value ~value:"second" ()
+  ] in
+  match Post.args loc args with
+    | Post.Args actual ->
+      LocTest.assert_loc_equal ~ctxt loc actual.loc;
+      List.iter2 (ValueTest.assert_value_equal ~ctxt) args actual.args
+
 let constr =
   "Macros" >::: [
     "Parameters" >::: [
@@ -159,6 +180,7 @@ let constr =
       ];
       "Definition" >:: test_body;
     ];
+    "Arguments" >:: test_args;
   ]
 
 (* Pretty Printing *)
@@ -269,6 +291,25 @@ let test_pp_body ctxt =
             |> flush_str_formatter
        ]
 
+(* Arguments *)
+
+let assert_pp_args = assert_pp Post.pp_args
+
+let test_pp_args ctxt =
+  let arg = ValueTest.value ~value:"first" () in
+  let arg' = ValueTest.value ~value:"second" () in
+  ()
+    |> args
+    |> assert_pp_args ~ctxt [""];
+  ()
+    |> args ~args:[arg; arg']
+    |> assert_pp_args ~ctxt [
+         fprintf str_formatter "%t, %t"
+           (Post.pp_value arg)
+           (Post.pp_value arg')
+           |> flush_str_formatter
+       ]
+
 let pp =
   "Macros" >::: [
     "Parameters" >::: [
@@ -285,4 +326,5 @@ let pp =
       ];
       "Definition" >:: test_pp_body;
     ];
+    "Arguments" >:: test_pp_args;
   ]

@@ -54,7 +54,7 @@ val body : ?loc:Loc.t -> ?lines:Post.line list -> unit -> Post.body
 
 (** {4 Arguments} *)
 
-val args : ?loc:Loc.t -> ?args:Post.seg list -> unit -> Post.args
+val args : ?loc:Loc.t -> ?args:Post.value list -> unit -> Post.args
 (** [args loc args] constructs a macro arguments list at location [loc] composed
     of the arguments [args]. *)
 
@@ -105,7 +105,7 @@ val unit_fs : ?loc:Loc.t -> unit -> Post.yoonit
 
 (** {4 Scales} *)
 
-val scale : ?loc:Loc.t -> ?mag:Post.mag -> ?yoonit:Post.yoonit -> unit -> Post.scale
+val scale : ?loc:Loc.t -> ?mag:Post.value -> ?yoonit:Post.value -> unit -> Post.scale
 (** [scale ?loc ?mag ?yoonit ()] constructs a scale of [mag] [yoonit]s at
     location [loc]. *)
 
@@ -148,6 +148,32 @@ val drive_up : ?loc:Loc.t -> unit -> Post.drive
 
 val drive_down : ?loc:Loc.t -> unit -> Post.drive
 (** [drive_down ?loc ()] constructs a pull down drive at location [loc]. *)
+
+(** {3 Pragmas} *)
+
+(** {4 Pragma Values} *)
+
+val pragma_value_exprs : ?loc:Loc.t -> ?exprs:Post.pragma_expr list -> unit -> Post.pragma_value
+(** [pragma_value_exprs ?loc ?exprs ()] constructs a pragma expressions value at
+    location [loc] with the value of [exprs]. *)
+
+val pragma_value_num : ?loc:Loc.t -> ?value:Post.value -> unit -> Post.pragma_value
+(** [pragma_value_num ?loc ?value ()] constructs a pragma number value at
+    location [loc] with the value [value]. *)
+
+val pragma_value_string : ?loc:Loc.t -> ?value:Post.value -> unit -> Post.pragma_value
+(** [pragma_value_string ?loc ?value ()] constructs a pragma string value at
+    location [loc] with the value [value]. *)
+
+val pragma_value_ident : ?loc:Loc.t -> ?name:Post.name -> unit -> Post.pragma_value
+(** [pragma_value_ident ?loc ?name ()] constructs a pragma identifier value at
+    location [loc] referencing the identier [name]. *)
+
+(** {4 Pragma Expressions} *)
+
+val pragma_expr : ?loc:Loc.t -> ?kwd:Post.name option -> ?value:Post.pragma_value option -> unit -> Post.pragma_expr
+(** [pragma_expr ?loc ?value ()] constrcuts an unnamed expression at location
+    [loc] with the keyword [kwd] and value [value]. *)
 
 (** {3 Line Levels} *)
 
@@ -237,11 +263,11 @@ val dir_timescale : ?loc:Loc.t -> ?yoonit:Post.scale -> ?prec:Post.scale option 
 (** [dir_timescale ?loc ?mag ?yoonit ()] constructs a timescale directive at
     location [loc] with time unit [yoonit] and precision [prec]. *)
 
-val dir_default_net_type : ?loc:Loc.t -> ?net:Post.net option -> unit -> Post.dir
+val dir_default_net_type : ?loc:Loc.t -> ?net:Post.name -> unit -> Post.dir
 (** [dir_default_net_type ?loc ?net ()] constructs a default net type directive
     at location [loc] with the net type [net]. *)
 
-val dir_unconnected_drive : ?loc:Loc.t -> ?drive:Post.drive -> unit -> Post.dir
+val dir_unconnected_drive : ?loc:Loc.t -> ?drive:Post.name -> unit -> Post.dir
 (** [dir_unconnected_drive ?loc ?drive ()] constructs a drive unconnected pins
     directive at location [loc] with the drive direction [drive] .*)
 
@@ -257,11 +283,11 @@ val dir_end_cell_define : ?loc:Loc.t -> unit -> Post.dir
 (** [dir_no_cell_define ?loc ()] constructs an end cell module directive at
     location [loc]. *)
 
-val dir_pragma : ?loc:Loc.t -> ?exprs:Post.pragma_expr list -> unit -> Post.dir
-(** [dir_pragma ?loc ?exprs ()] constructs a pragma directive a location [loc]
-    with the expressions [exprs]. *)
+val dir_pragma : ?loc:Loc.t -> ?name:Post.name -> ?exprs:Post.pragma_expr list -> unit -> Post.dir
+(** [dir_pragma ?loc ?name ?exprs ()] constructs a pragma directive a location
+    [loc] with the name [name] and the expressions [exprs]. *)
 
-val dir_line : ?loc:Loc.t -> ?number:int -> ?path:Post.value -> ?level:Post.level option -> unit -> Post.dir
+val dir_line : ?loc:Loc.t -> ?number:Post.value -> ?path:Post.value -> ?level:Post.value -> unit -> Post.dir
 (** [dir_line ?loc ?number ?path ?level ()] constructs a line level directive at
     location [loc] with line [number] in the file [path] with level [level]. *)
 
@@ -271,7 +297,7 @@ val dir_FILE : ?loc:Loc.t -> unit -> Post.dir
 val dir_LINE : ?loc:Loc.t -> unit -> Post.dir
 (** [dir_LINE ?loc ()] constructs a LINE directive at location [loc]. *)
 
-val dir_begin_keywords : ?loc:Loc.t -> ?keywords:Post.keywords -> unit -> Post.dir
+val dir_begin_keywords : ?loc:Loc.t -> ?keywords:Post.value -> unit -> Post.dir
 (** [dir_begin_keywords ?loc ?keywords ()] constructs a begin keywords directive
     at location [loc] with the keywords [keywords]. *)
 

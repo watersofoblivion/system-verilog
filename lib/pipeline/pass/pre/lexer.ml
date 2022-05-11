@@ -1,6 +1,6 @@
 (* Initializers *)
 
-let lexbuf_from_string str =
+let lexbuf_of_string str =
   let lexbuf = Sedlexing.Utf8.from_string str in
   let pos = {
     Lexing.pos_fname = "-";
@@ -11,7 +11,7 @@ let lexbuf_from_string str =
   Sedlexing.set_position lexbuf pos;
   lexbuf
 
-let lexbuf_from_file path =
+let lexbuf_of_file path =
   let path = Fpath.to_string path in
   let ic = open_in path in
   let lexbuf = Sedlexing.Utf8.from_channel ic in
@@ -81,6 +81,9 @@ let dir_LINE = Tokens.DIR_LINE
 let dir_begin_keywords = Tokens.DIR_BEGIN_KEYWORDS
 let dir_end_keywords = Tokens.DIR_END_KEYWORDS
 
+let number lexeme = Tokens.NUMBER lexeme
+let ident lexeme = Tokens.IDENT lexeme
+
 let dir id =
   try
     List.assoc id [
@@ -110,38 +113,23 @@ let dir id =
   with Not_found ->
     dir_macro id
 
-(* Net Types *)
-
-let net_wire = Tokens.NET_TYPE_WIRE
-let net_tri = Tokens.NET_TYPE_TRI
-let net_tri_0 = Tokens.NET_TYPE_TRI_0
-let net_tri_1 = Tokens.NET_TYPE_TRI_1
-let net_w_and = Tokens.NET_TYPE_W_AND
-let net_tri_and = Tokens.NET_TYPE_TRI_AND
-let net_w_or = Tokens.NET_TYPE_W_OR
-let net_tri_or = Tokens.NET_TYPE_TRI_OR
-let net_tri_reg = Tokens.NET_TYPE_TRI_REG
-let net_u_wire = Tokens.NET_TYPE_U_WIRE
-let net_none = Tokens.NET_TYPE_NONE
-
-let net nettype =
-  List.assoc nettype [
-    ("wire", net_wire);
-    ("tri", net_tri);
-    ("tri0", net_tri_0);
-    ("tri1", net_tri_1);
-    ("wand", net_w_and);
-    ("triand", net_tri_and);
-    ("wor", net_w_or);
-    ("trior", net_tri_or);
-    ("trireg", net_tri_reg);
-    ("uwire", net_u_wire);
-    ("none", net_none);
-  ]
-
 (* Lexers *)
 
 (* Source Code *)
+
+exception LexSourceError of { lexbuf: Sedlexing.lexbuf }
+exception LexSourceCommentError of { lexbuf: Sedlexing.lexbuf; multi: bool }
+exception LexSourceStringError of { lexbuf: Sedlexing.lexbuf }
+
+let lex_src_error lexbuf =
+  LexSourceError { lexbuf }
+    |> raise
+let lex_src_comment_error lexbuf multi =
+  LexSourceCommentError { lexbuf; multi }
+    |> raise
+let lex_src_string_error lexbuf =
+  LexSourceStringError { lexbuf }
+    |> raise
 
 let add lexbuf buf =
   lexbuf
@@ -182,7 +170,7 @@ and real_lex_src buf lexbuf =
       buf
         |> add lexbuf
         |> real_lex_src buf
-    | _ -> failwith "Un-possible!!!"
+    | _ -> lex_src_error lexbuf
 
 and lex_src_single_line_comment buf lexbuf =
   match%sedlex lexbuf with
@@ -195,7 +183,7 @@ and lex_src_single_line_comment buf lexbuf =
       buf
         |> add lexbuf
         |> lex_src_single_line_comment buf
-    | _ -> failwith "Un-possible!!!"
+    | _ -> lex_src_comment_error lexbuf false
 
 and lex_src_multi_line_comment buf lexbuf =
   match%sedlex lexbuf with
@@ -211,7 +199,7 @@ and lex_src_multi_line_comment buf lexbuf =
       buf
         |> add lexbuf
         |> lex_src_multi_line_comment buf
-    | _ -> failwith "Un-possible!!!"
+    | _ -> lex_src_comment_error lexbuf true
 
 and lex_src_string buf lexbuf =
   match%sedlex lexbuf with
@@ -228,9 +216,15 @@ and lex_src_string buf lexbuf =
       buf
         |> add lexbuf
         |> lex_src_string buf
-    | _ -> failwith "Un-possible!!!"
+    | _ -> lex_src_string_error lexbuf
 
 (* Directives *)
+
+exception LexDirError of { lexbuf: Sedlexing.lexbuf }
+
+let lex_dir_error lexbuf =
+  LexDirError { lexbuf }
+    |> raise
 
 let lex_dir lexbuf =
   match%sedlex lexbuf with
@@ -239,4 +233,4 @@ let lex_dir lexbuf =
       lexbuf
         |> Sedlexing.Utf8.lexeme
         |> dir
-    | _ -> failwith "Un-possible!!!"
+    | _ -> lex_dir_error lexbuf

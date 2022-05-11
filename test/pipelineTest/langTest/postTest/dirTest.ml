@@ -1,4 +1,4 @@
-(* Directives and Segments *)
+(* Directives *)
 
 open Format
 
@@ -8,20 +8,10 @@ open CommonTest
 
 (* Fixtures *)
 
-(* Includes *)
-
-let incl_path ?loc:(loc = LocTest.gen ()) ?sys:(sys = false) ?path:(path = ValueTest.value ()) _ =
-  Post.incl_path loc sys path
-
-let incl_macro ?loc:(loc = LocTest.gen ()) ?name:(name = NameTest.name ()) ?args:(args = None) _ =
-  Post.incl_macro loc name args
-
-(* Directives *)
-
 let dir_reset_all ?loc:(loc = LocTest.gen ()) _ =
   Post.dir_reset_all loc
 
-let dir_include ?loc:(loc = LocTest.gen ()) ?src:(src = incl_path ()) _ =
+let dir_include ?loc:(loc = LocTest.gen ()) ?src:(src = InclTest.incl_path ()) _ =
   Post.dir_include loc src
 
 let dir_define ?loc:(loc = LocTest.gen ()) ?name:(name = NameTest.name ()) ?params:(params = None) ?body:(body = None) _ =
@@ -54,10 +44,10 @@ let dir_end_if ?loc:(loc = LocTest.gen ()) _ =
 let dir_timescale ?loc:(loc = LocTest.gen ()) ?yoonit:(yoonit = TimescaleTest.scale ()) ?prec:(prec = None) _ =
   Post.dir_timescale loc yoonit prec
 
-let dir_default_net_type ?loc:(loc = LocTest.gen ()) ?net:(net = None) _ =
+let dir_default_net_type ?loc:(loc = LocTest.gen ()) ?net:(net = NameTest.name ()) _ =
   Post.dir_default_net_type loc net
 
-let dir_unconnected_drive ?loc:(loc = LocTest.gen ()) ?drive:(drive = DriveTest.drive_up ()) _ =
+let dir_unconnected_drive ?loc:(loc = LocTest.gen ()) ?drive:(drive = NameTest.name ()) _ =
   Post.dir_unconnected_drive loc drive
 
 let dir_no_unconnected_drive ?loc:(loc = LocTest.gen ()) _ =
@@ -69,10 +59,10 @@ let dir_cell_define ?loc:(loc = LocTest.gen ()) _ =
 let dir_end_cell_define ?loc:(loc = LocTest.gen ()) _ =
   Post.dir_end_cell_define loc
 
-let dir_pragma ?loc:(loc = LocTest.gen ()) ?exprs:(exprs = []) _ =
-  Post.dir_pragma loc exprs
+let dir_pragma ?loc:(loc = LocTest.gen ()) ?name:(name = NameTest.name ()) ?exprs:(exprs = []) _ =
+  Post.dir_pragma loc name exprs
 
-let dir_line ?loc:(loc = LocTest.gen ()) ?number:(number = 0) ?path:(path = ValueTest.value ()) ?level:(level = None) _ =
+let dir_line ?loc:(loc = LocTest.gen ()) ?number:(number = ValueTest.value ()) ?path:(path = ValueTest.value ()) ?level:(level = ValueTest.value ()) _ =
   Post.dir_line loc number path level
 
 let dir_FILE ?loc:(loc = LocTest.gen ()) _ =
@@ -81,44 +71,20 @@ let dir_FILE ?loc:(loc = LocTest.gen ()) _ =
 let dir_LINE ?loc:(loc = LocTest.gen ()) _ =
   Post.dir_LINE loc
 
-let dir_begin_keywords ?loc:(loc = LocTest.gen ()) ?keywords:(keywords = KeywordsTest.keywords_1800_2012 ()) _ =
+let dir_begin_keywords ?loc:(loc = LocTest.gen ()) ?keywords:(keywords = ValueTest.value ()) _ =
   Post.dir_begin_keywords loc keywords
 
 let dir_end_keywords ?loc:(loc = LocTest.gen ()) _ =
   Post.dir_end_keywords loc
 
-(* Macro Arguments *)
-
-let args ?loc:(loc = LocTest.gen ()) ?args:(args = []) _ =
-  Post.args loc args
-
-(* Segments *)
-
-let seg_source ?loc:(loc = LocTest.gen ()) ?src:(src = "") _ =
-  Post.seg_source loc src
-
-let seg_directive ?loc:(loc = LocTest.gen ()) ?dir:(dir = dir_reset_all ()) _ =
-  Post.seg_directive loc dir
-
 (* Assertions *)
 
-let rec assert_incl_equal ~ctxt expected actual = match expected, actual with
-  | Post.IncludePath expected, Post.IncludePath actual ->
-    LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    assert_equal ~ctxt ~printer:string_of_bool ~msg:"System flags are not equal" expected.sys actual.sys;
-    ValueTest.assert_value_equal ~ctxt expected.path actual.path
-  | Post.IncludeMacro expected, Post.IncludeMacro actual ->
-    LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    NameTest.assert_name_equal ~ctxt expected.name actual.name;
-    assert_optional_equal ~ctxt "args" assert_args_equal expected.args actual.args
-  | _ -> assert_failure "Include sources are not equal"
-
-and assert_dir_equal ~ctxt expected actual = match expected, actual with
+let assert_dir_equal ~ctxt expected actual = match expected, actual with
   | Post.DirResetAll expected, Post.DirResetAll actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc
   | Post.DirInclude expected, Post.DirInclude actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    assert_incl_equal ~ctxt expected.src actual.src
+    InclTest.assert_incl_equal ~ctxt expected.src actual.src
   | Post.DirDefine expected, Post.DirDefine actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
     NameTest.assert_name_equal ~ctxt expected.name actual.name;
@@ -132,7 +98,7 @@ and assert_dir_equal ~ctxt expected actual = match expected, actual with
   | Post.DirMacro expected, Post.DirMacro actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
     NameTest.assert_name_equal ~ctxt expected.name actual.name;
-    assert_optional_equal ~ctxt "args" assert_args_equal expected.args actual.args
+    assert_optional_equal ~ctxt "args" MacroTest.assert_args_equal expected.args actual.args
   | Post.DirIfDef expected, Post.DirIfDef actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
     NameTest.assert_name_equal ~ctxt expected.macro actual.macro
@@ -152,10 +118,10 @@ and assert_dir_equal ~ctxt expected actual = match expected, actual with
     assert_optional_equal ~ctxt "precision" TimescaleTest.assert_scale_equal expected.prec actual.prec
   | Post.DirDefaultNetType expected, Post.DirDefaultNetType actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    assert_optional_equal ~ctxt "net type" NetTest.assert_net_equal expected.net actual.net
+    NameTest.assert_name_equal ~ctxt expected.net actual.net
   | Post.DirUnconnectedDrive expected, Post.DirUnconnectedDrive actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    DriveTest.assert_drive_equal ~ctxt expected.drive actual.drive
+    NameTest.assert_name_equal ~ctxt expected.drive actual.drive
   | Post.DirNoUnconnectedDrive expected, Post.DirNoUnconnectedDrive actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc
   | Post.DirCellDefine expected, Post.DirCellDefine actual ->
@@ -164,76 +130,27 @@ and assert_dir_equal ~ctxt expected actual = match expected, actual with
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc
   | Post.DirPragma expected, Post.DirPragma actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
+    NameTest.assert_name_equal ~ctxt expected.name actual.name;
     List.iter2 (PragmaTest.assert_pragma_expr_equal ~ctxt) expected.exprs actual.exprs
   | Post.DirLine expected, Post.DirLine actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    assert_equal ~ctxt ~printer:string_of_int ~msg:"Line numbers are not equal" expected.number actual.number;
+    ValueTest.assert_value_equal ~ctxt expected.number actual.number;
     ValueTest.assert_value_equal ~ctxt expected.path actual.path;
-    assert_optional_equal ~ctxt "line level" LevelTest.assert_level_equal expected.level actual.level
+    ValueTest.assert_value_equal ~ctxt expected.level actual.level
   | Post.DirFILE expected, Post.DirFILE actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc
   | Post.DirLINE expected, Post.DirLINE actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc
   | Post.DirBeginKeywords expected, Post.DirBeginKeywords actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    KeywordsTest.assert_keywords_equal ~ctxt expected.keywords actual.keywords
+    ValueTest.assert_value_equal ~ctxt expected.keywords actual.keywords
   | Post.DirEndKeywords expected, Post.DirEndKeywords actual ->
     LocTest.assert_loc_equal ~ctxt expected.loc actual.loc
   | _ -> assert_failure "Directives are not equal"
 
-and assert_args_equal ~ctxt expected actual = match expected, actual with
-  | Post.Args expected, Post.Args actual ->
-    LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    List.iter2 (assert_seg_equal ~ctxt) expected.args actual.args
-
-and assert_seg_equal ~ctxt expected actual = match expected, actual with
-  | Post.SegSource expected, Post.SegSource actual ->
-    LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    assert_equal ~ctxt ~msg:"Sources are not equal" expected.src actual.src
-  | Post.SegDirective expected, Post.SegDirective actual ->
-    LocTest.assert_loc_equal ~ctxt expected.loc actual.loc;
-    assert_dir_equal ~ctxt expected.dir actual.dir
-  | _ -> assert_failure "Segments are not equal"
-
 (* Constructurs *)
 
-let fail_incl_expected expected actual =
-  str_formatter
-    |> dprintf "Include sources are not equal: expected %s, found %t" expected (Post.pp_incl actual)
-    |> flush_str_formatter
-    |> assert_failure
-
-let test_incl_path ctxt =
-  let loc = LocTest.gen () in
-  let sys = true in
-  let path = ValueTest.value () in
-  match Post.incl_path loc sys path with
-    | Post.IncludePath actual ->
-      LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      assert_equal ~ctxt ~printer:string_of_bool ~msg:"System flags are not equal" sys actual.sys;
-      ValueTest.assert_value_equal ~ctxt path actual.path
-    | actual -> fail_incl_expected "path" actual
-
-let test_incl_macro ctxt =
-  let loc = LocTest.gen () in
-  let name = NameTest.name () in
-  let args = Some (args ~args:[seg_source (); seg_directive ()] ()) in
-  match Post.incl_macro loc name args with
-    | Post.IncludeMacro actual ->
-      LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      NameTest.assert_name_equal ~ctxt name actual.name;
-      assert_optional_equal ~ctxt "arguments" assert_args_equal args actual.args
-    | actual -> fail_incl_expected "macro" actual
-
-let constr_incl =
-  "Include Sources" >::: [
-    "Paths"  >:: test_incl_path;
-    "Macros" >:: test_incl_macro;
-  ]
-
-(* Directives *)
-
-let fail_dir_expected expected actual =
+let fail_expected expected actual =
   str_formatter
     |> dprintf "Directives are not equal: expected %s, found %t" expected (Post.pp_dir actual)
     |> flush_str_formatter
@@ -243,16 +160,16 @@ let test_dir_reset_all ctxt =
   let loc = LocTest.gen () in
   match Post.dir_reset_all loc with
     | Post.DirResetAll actual -> LocTest.assert_loc_equal ~ctxt loc actual.loc
-    | actual -> fail_dir_expected "reset all" actual
+    | actual -> fail_expected "reset all" actual
 
 let test_dir_include ctxt =
   let loc = LocTest.gen () in
-  let src = incl_path () in
+  let src = InclTest.incl_path () in
   match Post.dir_include loc src with
     | Post.DirInclude actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      assert_incl_equal ~ctxt src actual.src
-    | actual -> fail_dir_expected "include" actual
+      InclTest.assert_incl_equal ~ctxt src actual.src
+    | actual -> fail_expected "include" actual
 
 let test_dir_define ctxt =
   let loc = LocTest.gen () in
@@ -277,7 +194,7 @@ let test_dir_define ctxt =
       NameTest.assert_name_equal ~ctxt name actual.name;
       assert_optional_equal ~ctxt "parameters" MacroTest.assert_params_equal params actual.params;
       assert_optional_equal ~ctxt "body" MacroTest.assert_body_equal body actual.body
-    | actual -> fail_dir_expected "macro definition" actual
+    | actual -> fail_expected "macro definition" actual
 
 let test_dir_undef ctxt =
   let loc = LocTest.gen () in
@@ -286,27 +203,27 @@ let test_dir_undef ctxt =
     | Post.DirUndef actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
       NameTest.assert_name_equal ~ctxt name actual.name
-    | actual -> fail_dir_expected "undefine macro" actual
+    | actual -> fail_expected "undefine macro" actual
 
 let test_dir_undefine_all ctxt =
   let loc = LocTest.gen () in
   match Post.dir_undefine_all loc with
     | Post.DirUndefineAll actual -> LocTest.assert_loc_equal ~ctxt loc actual.loc
-    | actual -> fail_dir_expected "undefine all" actual
+    | actual -> fail_expected "undefine all" actual
 
 let test_dir_macro ctxt =
   let loc = LocTest.gen () in
   let name = NameTest.name () in
-  let args = Some (args ~args:[
-    seg_source ~src:"the-first-arg" ();
-    seg_directive ~dir:(dir_macro ()) ();
+  let args = Some (MacroTest.args ~args:[
+    ValueTest.value ~value:"first" ();
+    ValueTest.value ~value:"second" ();
   ] ()) in
   match Post.dir_macro loc name args with
     | Post.DirMacro actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
       NameTest.assert_name_equal ~ctxt name actual.name;
-      assert_optional_equal "arguments" ~ctxt assert_args_equal args actual.args
-    | actual -> fail_dir_expected "macro use" actual
+      assert_optional_equal "arguments" ~ctxt MacroTest.assert_args_equal args actual.args
+    | actual -> fail_expected "macro use" actual
 
 let test_dir_if_def ctxt =
   let loc = LocTest.gen () in
@@ -315,7 +232,7 @@ let test_dir_if_def ctxt =
     | Post.DirIfDef actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
       NameTest.assert_name_equal ~ctxt macro actual.macro
-    | actual -> fail_dir_expected "if defined" actual
+    | actual -> fail_expected "if defined" actual
 
 let test_dir_if_n_def ctxt =
   let loc = LocTest.gen () in
@@ -324,7 +241,7 @@ let test_dir_if_n_def ctxt =
     | Post.DirIfNDef actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
       NameTest.assert_name_equal ~ctxt macro actual.macro
-    | actual -> fail_dir_expected "if not defined" actual
+    | actual -> fail_expected "if not defined" actual
 
 let test_dir_els_if ctxt =
   let loc = LocTest.gen () in
@@ -333,120 +250,130 @@ let test_dir_els_if ctxt =
     | Post.DirElsIf actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
       NameTest.assert_name_equal ~ctxt macro actual.macro
-    | actual -> fail_dir_expected "else if defined" actual
+    | actual -> fail_expected "else if defined" actual
 
 let test_dir_else ctxt =
   let loc = LocTest.gen () in
   match Post.dir_else loc with
     | Post.DirElse actual -> LocTest.assert_loc_equal ~ctxt loc actual.loc
-    | actual -> fail_dir_expected "else" actual
+    | actual -> fail_expected "else" actual
 
 let test_dir_end_if ctxt =
   let loc = LocTest.gen () in
   match Post.dir_end_if loc with
     | Post.DirEndIf actual -> LocTest.assert_loc_equal ~ctxt loc actual.loc
-    | actual -> fail_dir_expected "end if" actual
+    | actual -> fail_expected "end if" actual
 
 let test_dir_timescale ctxt =
   let loc = LocTest.gen () in
-  let yoonit = TimescaleTest.scale ~mag:(TimescaleTest.mag_1 ()) ~yoonit:(TimescaleTest.unit_ns ()) () in
-  let prec = Some (TimescaleTest.scale ~mag:(TimescaleTest.mag_100 ()) ~yoonit:(TimescaleTest.unit_ps ()) ()) in
+  let yoonit =
+    let mag = ValueTest.value ~value:"mag-1" () in
+    let yoonit = ValueTest.value ~value:"yoonit-1" () in
+    TimescaleTest.scale ~mag ~yoonit ()
+  in
+  let prec =
+    let mag = ValueTest.value ~value:"mag-2" () in
+    let yoonit = ValueTest.value ~value:"yoonit-2" () in
+    Some (TimescaleTest.scale ~mag ~yoonit ())
+  in
   match Post.dir_timescale loc yoonit prec with
     | Post.DirTimescale actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
       TimescaleTest.assert_scale_equal ~ctxt yoonit actual.yoonit;
       assert_optional_equal ~ctxt "precision" TimescaleTest.assert_scale_equal prec actual.prec
-    | actual -> fail_dir_expected "timescale" actual
+    | actual -> fail_expected "timescale" actual
 
 let test_dir_default_net_type ctxt =
   let loc = LocTest.gen () in
-  let net = Some (NetTest.net_wire ()) in
+  let net = NameTest.name () in
   match Post.dir_default_net_type loc net with
     | Post.DirDefaultNetType actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      assert_optional_equal ~ctxt "net type" NetTest.assert_net_equal net actual.net
-    | actual -> fail_dir_expected "default net type" actual
+      NameTest.assert_name_equal ~ctxt net actual.net
+    | actual -> fail_expected "default net type" actual
 
 let test_dir_unconnected_drive ctxt =
   let loc = LocTest.gen () in
-  let drive = DriveTest.drive_up () in
+  let drive = NameTest.name () in
   match Post.dir_unconnected_drive loc drive with
     | Post.DirUnconnectedDrive actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      DriveTest.assert_drive_equal ~ctxt drive actual.drive
-    | actual -> fail_dir_expected "drive unconnected pins" actual
+      NameTest.assert_name_equal ~ctxt drive actual.drive
+    | actual -> fail_expected "drive unconnected pins" actual
 
 let test_dir_no_unconnected_drive ctxt =
   let loc = LocTest.gen () in
   match Post.dir_no_unconnected_drive loc with
     | Post.DirNoUnconnectedDrive actual -> LocTest.assert_loc_equal ~ctxt loc actual.loc
-    | actual -> fail_dir_expected "stop driving unconnected pins" actual
+    | actual -> fail_expected "stop driving unconnected pins" actual
 
 let test_dir_cell_define ctxt =
   let loc = LocTest.gen () in
   match Post.dir_cell_define loc with
     | Post.DirCellDefine actual -> LocTest.assert_loc_equal ~ctxt loc actual.loc
-    | actual -> fail_dir_expected "begin cell modules" actual
+    | actual -> fail_expected "begin cell modules" actual
 
 let test_dir_end_cell_define ctxt =
   let loc = LocTest.gen () in
   match Post.dir_end_cell_define loc with
     | Post.DirEndCellDefine actual -> LocTest.assert_loc_equal ~ctxt loc actual.loc
-    | actual -> fail_dir_expected "end cell modules" actual
+    | actual -> fail_expected "end cell modules" actual
 
 let test_dir_pragma ctxt =
   let loc = LocTest.gen () in
+  let name = NameTest.name () in
   let exprs = [
     PragmaTest.pragma_expr ();
     PragmaTest.pragma_expr ();
   ] in
-  match Post.dir_pragma loc exprs with
+  match Post.dir_pragma loc name exprs with
     | Post.DirPragma actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
+      NameTest.assert_name_equal ~ctxt name actual.name;
       List.iter2 (PragmaTest.assert_pragma_expr_equal ~ctxt) exprs actual.exprs
-    | actual -> fail_dir_expected "pragma" actual
+    | actual -> fail_expected "pragma" actual
 
 let test_dir_line ctxt =
   let loc = LocTest.gen () in
-  let number = 42 in
-  let path = ValueTest.value () in
-  let level = Some (LevelTest.level_entered ()) in
+  let number = ValueTest.value ~value:"42" () in
+  let path = ValueTest.value ~value:"the/path" () in
+  let level = ValueTest.value ~value:"1" () in
   match Post.dir_line loc number path level with
     | Post.DirLine actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      assert_equal ~ctxt ~printer:string_of_int ~msg:"Line numbers are not equal" number actual.number;
+      ValueTest.assert_value_equal ~ctxt number actual.number;
       ValueTest.assert_value_equal ~ctxt path actual.path;
-      assert_optional_equal ~ctxt "line level" LevelTest.assert_level_equal level actual.level
-    | actual -> fail_dir_expected "line level" actual
+      ValueTest.assert_value_equal ~ctxt level actual.level
+    | actual -> fail_expected "line level" actual
 
 let test_dir_FILE ctxt =
   let loc = LocTest.gen () in
   match Post.dir_FILE loc with
     | Post.DirFILE actual -> LocTest.assert_loc_equal ~ctxt loc actual.loc
-    | actual -> fail_dir_expected "file name" actual
+    | actual -> fail_expected "file name" actual
 
 let test_dir_LINE ctxt =
   let loc = LocTest.gen () in
   match Post.dir_LINE loc with
     | Post.DirLINE actual -> LocTest.assert_loc_equal ~ctxt loc actual.loc
-    | actual -> fail_dir_expected "line number" actual
+    | actual -> fail_expected "line number" actual
 
 let test_dir_begin_keywords ctxt =
   let loc = LocTest.gen () in
-  let keywords = KeywordsTest.keywords_1800_2012 () in
+  let keywords = ValueTest.value () in
   match Post.dir_begin_keywords loc keywords with
     | Post.DirBeginKeywords actual ->
       LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      KeywordsTest.assert_keywords_equal ~ctxt keywords actual.keywords
-    | actual -> fail_dir_expected "begin keywords" actual
+      ValueTest.assert_value_equal ~ctxt keywords actual.keywords
+    | actual -> fail_expected "begin keywords" actual
 
 let test_dir_end_keywords ctxt =
   let loc = LocTest.gen () in
   match Post.dir_end_keywords loc with
     | Post.DirEndKeywords actual -> LocTest.assert_loc_equal ~ctxt loc actual.loc
-    | actual -> fail_dir_expected "end keywords" actual
+    | actual -> fail_expected "end keywords" actual
 
-let constr_dir =
+let constr =
   "Directives" >::: [
     "Reset All" >:: test_dir_reset_all;
     "Include"   >:: test_dir_include;
@@ -485,103 +412,7 @@ let constr_dir =
     ];
   ]
 
-(* Arguments *)
-
-let test_args ctxt =
-  let loc = LocTest.gen () in
-  let args = [
-    seg_source ();
-    seg_directive ()
-  ] in
-  match Post.args loc args with
-    | Post.Args actual ->
-      LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      List.iter2 (assert_seg_equal ~ctxt) args actual.args
-
-let constr_args =
-  "Macro Arguments" >:: test_args
-
-(* Segments *)
-
-let fail_seg_expected expected actual =
-  str_formatter
-    |> dprintf "Segments are not equal: expected %s, found %t" expected (Post.pp_seg actual)
-    |> flush_str_formatter
-    |> assert_failure
-
-let test_seg_source ctxt =
-  let loc = LocTest.gen () in
-  let src = "the source code" in
-  match Post.seg_source loc src with
-    | Post.SegSource actual ->
-      LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      assert_equal ~ctxt ~msg:"Sources are not equal" src actual.src
-    | actual -> fail_seg_expected "source code" actual
-
-let test_seg_directive ctxt =
-  let loc = LocTest.gen () in
-  let dir = dir_reset_all () in
-  match Post.seg_directive loc dir with
-    | Post.SegDirective actual ->
-      LocTest.assert_loc_equal ~ctxt loc actual.loc;
-      assert_dir_equal ~ctxt dir actual.dir
-    | actual -> fail_seg_expected "compiler directive" actual
-
-let constr_seg =
-  "Segmets" >::: [
-    "Source Code"        >:: test_seg_source;
-    "Compiler Directive" >:: test_seg_directive;
-  ]
-
 (* Pretty Printing *)
-
-(* Includes *)
-
-let assert_pp_incl = assert_pp Post.pp_incl
-
-let test_pp_incl_path ctxt =
-  let path = ValueTest.value () in
-  ()
-    |> incl_path ~sys:true ~path
-    |> assert_pp_incl ~ctxt [
-         fprintf str_formatter "<%t>"
-           (Post.pp_value path)
-           |> flush_str_formatter
-       ];
-  ()
-    |> incl_path ~sys:false ~path
-    |> assert_pp_incl ~ctxt [
-         fprintf str_formatter "\"%t\""
-           (Post.pp_value path)
-           |> flush_str_formatter
-       ]
-
-let test_pp_incl_macro ctxt =
-  let name = NameTest.name () in
-  let args = args ~args:[seg_source (); seg_directive ()] () in
-  ()
-    |> incl_macro ~name ~args:None
-    |> assert_pp_incl ~ctxt [
-         fprintf str_formatter "`%t"
-           (Post.pp_name name)
-           |> flush_str_formatter
-       ];
-  ()
-    |> incl_macro ~name ~args:(Some args)
-    |> assert_pp_incl ~ctxt [
-         fprintf str_formatter "`%t(%t)"
-           (Post.pp_name name)
-           (Post.pp_args args)
-           |> flush_str_formatter
-       ]
-
-let pp_incl =
-  "Include Sources" >::: [
-    "Paths"  >:: test_pp_incl_path;
-    "Macros" >:: test_pp_incl_macro;
-  ]
-
-(* Directives *)
 
 let assert_pp_dir = assert_pp Post.pp_dir
 
@@ -591,7 +422,7 @@ let test_pp_dir_reset_all ctxt =
     |> assert_pp_dir ~ctxt ["`resetall"]
 
 let test_pp_dir_include ctxt =
-  let src = incl_path () in
+  let src = InclTest.incl_path () in
   ()
     |> dir_include ~src
     |> assert_pp_dir ~ctxt [
@@ -669,9 +500,9 @@ let test_pp_dir_undefine_all ctxt =
 
 let test_pp_dir_macro ctxt =
   let name = NameTest.name () in
-  let args = args ~args:[
-    seg_source ();
-    seg_directive ()
+  let args = MacroTest.args ~args:[
+    ValueTest.value ~value:"first" ();
+    ValueTest.value ~value:"second" ()
   ] () in
   ()
     |> dir_macro ~name
@@ -732,14 +563,14 @@ let test_pp_dir_end_if ctxt =
 let test_pp_dir_timescale ctxt =
   let yoonit =
     TimescaleTest.scale
-      ~mag:(TimescaleTest.mag_1 ())
-      ~yoonit:(TimescaleTest.unit_ns ())
+      ~mag:(ValueTest.value ~value:"mag-1" ())
+      ~yoonit:(ValueTest.value ~value:"yoonit-1" ())
       ()
   in
   let prec =
     TimescaleTest.scale
-      ~mag:(TimescaleTest.mag_100 ())
-      ~yoonit:(TimescaleTest.unit_ps ())
+      ~mag:(ValueTest.value ~value:"mag-2" ())
+      ~yoonit:(ValueTest.value ~value:"yoonit-2" ())
       ()
   in
   ()
@@ -759,22 +590,22 @@ let test_pp_dir_timescale ctxt =
        ]
 
 let test_pp_dir_default_net_type ctxt =
-  let net = Some (NetTest.net_tri_and ()) in
+  let net = NameTest.name () in
   ()
     |> dir_default_net_type ~net
     |> assert_pp_dir ~ctxt [
          fprintf str_formatter "`default_nettype %t"
-           (Post.pp_net net)
+           (Post.pp_name net)
            |> flush_str_formatter
        ]
 
 let test_pp_dir_unconnected_drive ctxt =
-  let drive = DriveTest.drive_up () in
+  let drive = NameTest.name () in
   ()
     |> dir_unconnected_drive ~drive
     |> assert_pp_dir ~ctxt [
          fprintf str_formatter "`unconnected_drive %t"
-           (Post.pp_drive drive)
+           (Post.pp_name drive)
            |> flush_str_formatter
        ]
 
@@ -794,37 +625,39 @@ let test_pp_dir_end_cell_define ctxt =
     |> assert_pp_dir ~ctxt ["`endcelldefine"]
 
 let test_pp_dir_pragma ctxt =
+  let name = NameTest.name ~name:"pragma-name" () in
   let expr =
-    let kwd = NameTest.name ~name:"first" () in
-    let value = PragmaTest.pragma_value_string ~value:(ValueTest.value ~value:"first-value" ()) () in
-    PragmaTest.pragma_expr ~kwd:(Some kwd) ~value:(Some value) ()
+    let kwd = Some (NameTest.name ~name:"first" ()) in
+    let value = Some (PragmaTest.pragma_value_string ~value:(ValueTest.value ~value:"first-value" ()) ()) in
+    PragmaTest.pragma_expr ~kwd ~value ()
   in
   let expr' =
-    let kwd = NameTest.name ~name:"second" () in
-    let value = PragmaTest.pragma_value_string ~value:(ValueTest.value ~value:"second-value" ()) () in
-    PragmaTest.pragma_expr ~kwd:(Some kwd) ~value:(Some value) ()
+    let kwd = Some (NameTest.name ~name:"second" ()) in
+    let value = Some (PragmaTest.pragma_value_string ~value:(ValueTest.value ~value:"second-value" ()) ()) in
+    PragmaTest.pragma_expr ~kwd ~value ()
   in
   let exprs = [expr; expr'] in
   ()
     |> dir_pragma ~exprs
     |> assert_pp_dir ~ctxt [
-         fprintf str_formatter "`pragma %t, %t"
+         fprintf str_formatter "`pragma %t %t, %t"
+           (Post.pp_name name)
            (Post.pp_pragma_expr expr)
            (Post.pp_pragma_expr expr')
            |> flush_str_formatter
        ]
 
 let test_pp_dir_line ctxt =
-  let number = 42 in
-  let path = ValueTest.value () in
-  let level = Some (LevelTest.level_entered ()) in
+  let number = ValueTest.value ~value:"42" () in
+  let path = ValueTest.value ~value:"some/path" () in
+  let level = ValueTest.value ~value:"1" () in
   ()
     |> dir_line ~number ~path ~level
     |> assert_pp_dir ~ctxt [
-         fprintf str_formatter "`line %d \"%t\" %t"
-           number
+         fprintf str_formatter "`line %t \"%t\" %t"
+           (Post.pp_value number)
            (Post.pp_value path)
-           (Post.pp_level level)
+           (Post.pp_value level)
            |> flush_str_formatter
     ]
 
@@ -839,12 +672,12 @@ let test_pp_dir_LINE ctxt =
     |> assert_pp_dir ~ctxt ["`__LINE__"]
 
 let test_pp_dir_begin_keywords ctxt =
-  let keywords = KeywordsTest.keywords_1800_2012 () in
+  let keywords = ValueTest.value () in
   ()
     |> dir_begin_keywords ~keywords
     |> assert_pp_dir ~ctxt [
          fprintf str_formatter "`begin_keywords %t"
-           (Post.pp_keywords keywords)
+           (Post.pp_value keywords)
            |> flush_str_formatter
        ]
 
@@ -853,7 +686,7 @@ let test_pp_dir_end_keywords ctxt =
     |> dir_end_keywords
     |> assert_pp_dir ~ctxt ["`end_keywords"]
 
-let pp_dir =
+let pp =
   "Directives" >::: [
     "Reset All" >:: test_pp_dir_reset_all;
     "Include"   >:: test_pp_dir_include;
@@ -890,52 +723,4 @@ let pp_dir =
       "Begin" >:: test_pp_dir_begin_keywords;
       "End"   >:: test_pp_dir_end_keywords;
     ];
-  ]
-
-(* Arguments *)
-
-let assert_pp_args = assert_pp Post.pp_args
-
-let test_pp_args ctxt =
-  let arg = seg_source () in
-  let arg' = seg_directive () in
-  ()
-    |> args
-    |> assert_pp_args ~ctxt [""];
-  ()
-    |> args ~args:[arg; arg']
-    |> assert_pp_args ~ctxt [
-         fprintf str_formatter "%t, %t"
-           (Post.pp_seg arg)
-           (Post.pp_seg arg')
-           |> flush_str_formatter
-       ]
-
-let pp_args =
-  "Macro Arguments" >:: test_pp_args
-
-(* Segments *)
-
-let assert_pp_seg = assert_pp Post.pp_seg
-
-let test_pp_seg_source ctxt =
-  let src = "the source code" in
-  ()
-    |> seg_source ~src
-    |> assert_pp_seg ~ctxt [src]
-
-let test_pp_seg_directive ctxt =
-  let dir = dir_reset_all () in
-  ()
-    |> seg_directive ~dir
-    |> assert_pp_seg ~ctxt [
-         fprintf str_formatter "%t"
-           (Post.pp_dir dir)
-           |> flush_str_formatter
-       ]
-
-let pp_seg =
-  "Segments" >::: [
-    "Source Code"        >:: test_pp_seg_source;
-    "Compiler Directive" >:: test_pp_seg_directive;
   ]

@@ -37,6 +37,6 @@ and pp_pragma_expr = function
   | PragmaExpr expr ->
     match expr.kwd, expr.value with
       | None, None -> (fun _ -> ())
-      | Some name, None -> dprintf "%t" (Name.pp_name name)
+      | Some kwd, None -> dprintf "%t" (Name.pp_name kwd)
       | None, Some value -> dprintf "%t" (pp_pragma_value value)
-      | Some name, Some value -> dprintf "%t = %t" (Name.pp_name name) (pp_pragma_value value)
+      | Some kwd, Some value -> dprintf "%t = %t" (Name.pp_name kwd) (pp_pragma_value value)

@@ -54,17 +54,8 @@ let token_printer = function
   | Pre.DIR_END_KEYWORDS -> "(directive end_keywords)"
 
   (* Net Types *)
-  | Pre.NET_TYPE_WIRE -> "(net-type wire)"
-  | Pre.NET_TYPE_TRI -> "(net-type tri)"
-  | Pre.NET_TYPE_TRI_0 -> "(net-type tri0)"
-  | Pre.NET_TYPE_TRI_1 -> "(net-type tri1)"
-  | Pre.NET_TYPE_W_AND -> "(net-type wand)"
-  | Pre.NET_TYPE_TRI_AND -> "(net-type triand)"
-  | Pre.NET_TYPE_W_OR -> "(net-type wor)"
-  | Pre.NET_TYPE_TRI_OR -> "(net-type trior)"
-  | Pre.NET_TYPE_TRI_REG -> "(net-type trireg)"
-  | Pre.NET_TYPE_U_WIRE -> "(net-type uwire)"
-  | Pre.NET_TYPE_NONE -> "(net-type none)"
+  | Pre.NUMBER lexeme -> Printf.sprintf "(number %S)" lexeme
+  | Pre.IDENT lexeme -> Printf.sprintf "(identifier %S)" lexeme
 
 let assert_token_equal ~ctxt expected actual = match expected, actual with
   (* Non-Printable *)
@@ -115,18 +106,11 @@ let assert_token_equal ~ctxt expected actual = match expected, actual with
   | Pre.DIR_BEGIN_KEYWORDS, Pre.DIR_BEGIN_KEYWORDS
   | Pre.DIR_END_KEYWORDS, Pre.DIR_END_KEYWORDS -> ()
 
-  (* Net Types *)
-  | Pre.NET_TYPE_WIRE, Pre.NET_TYPE_WIRE
-  | Pre.NET_TYPE_TRI, Pre.NET_TYPE_TRI
-  | Pre.NET_TYPE_TRI_0, Pre.NET_TYPE_TRI_0
-  | Pre.NET_TYPE_TRI_1, Pre.NET_TYPE_TRI_1
-  | Pre.NET_TYPE_W_AND, Pre.NET_TYPE_W_AND
-  | Pre.NET_TYPE_TRI_AND, Pre.NET_TYPE_TRI_AND
-  | Pre.NET_TYPE_W_OR, Pre.NET_TYPE_W_OR
-  | Pre.NET_TYPE_TRI_OR, Pre.NET_TYPE_TRI_OR
-  | Pre.NET_TYPE_TRI_REG, Pre.NET_TYPE_TRI_REG
-  | Pre.NET_TYPE_U_WIRE, Pre.NET_TYPE_U_WIRE
-  | Pre.NET_TYPE_NONE, Pre.NET_TYPE_NONE -> ()
+  (* General *)
+  | Pre.NUMBER expected, Pre.NUMBER actual ->
+    assert_equal ~ctxt ~printer:Fun.id ~msg:"Numeric lexemes are not equal" expected actual
+  | Pre.IDENT expected, Pre.IDENT actual ->
+    assert_equal ~ctxt ~printer:Fun.id ~msg:"Identifier lexemes are not equal" expected actual
 
   (* Failure *)
   | _ -> assert_equal ~ctxt ~cmp:not_equal ~printer:token_printer ~msg:"Tokens are not equal" expected actual
@@ -360,80 +344,21 @@ let test_dir ctxt =
     ("end_keywords", Some Pre.dir_end_keywords);
   ]
 
-let test_net_wire _ =
-  match Pre.net_wire with
-    | Pre.NET_TYPE_WIRE -> ()
+(* General *)
+
+let test_number ctxt =
+  let lexeme = "42" in
+  match Pre.number lexeme with
+    | Pre.NUMBER actual -> assert_equal ~ctxt ~printer:Fun.id ~msg:"Numeric lexemes are not equal" lexeme actual
     | _ -> assert_failure "Tokens are not equal"
 
-let test_net_tri _ =
-  match Pre.net_tri with
-    | Pre.NET_TYPE_TRI -> ()
+let test_ident ctxt =
+  let lexeme = "42" in
+  match Pre.ident lexeme with
+    | Pre.IDENT actual -> assert_equal ~ctxt ~printer:Fun.id ~msg:"Identifier lexemes are not equal" lexeme actual
     | _ -> assert_failure "Tokens are not equal"
 
-let test_net_tri_0 _ =
-  match Pre.net_tri_0 with
-    | Pre.NET_TYPE_TRI_0 -> ()
-    | _ -> assert_failure "Tokens are not equal"
-
-let test_net_tri_1 _ =
-  match Pre.net_tri_1 with
-    | Pre.NET_TYPE_TRI_1 -> ()
-    | _ -> assert_failure "Tokens are not equal"
-
-let test_net_w_and _ =
-  match Pre.net_w_and with
-    | Pre.NET_TYPE_W_AND -> ()
-    | _ -> assert_failure "Tokens are not equal"
-
-let test_net_tri_and _ =
-  match Pre.net_tri_and with
-    | Pre.NET_TYPE_TRI_AND -> ()
-    | _ -> assert_failure "Tokens are not equal"
-
-let test_net_w_or _ =
-  match Pre.net_w_or with
-    | Pre.NET_TYPE_W_OR -> ()
-    | _ -> assert_failure "Tokens are not equal"
-
-let test_net_tri_or _ =
-  match Pre.net_tri_or with
-    | Pre.NET_TYPE_TRI_OR -> ()
-    | _ -> assert_failure "Tokens are not equal"
-
-let test_net_tri_reg _ =
-  match Pre.net_tri_reg with
-    | Pre.NET_TYPE_TRI_REG -> ()
-    | _ -> assert_failure "Tokens are not equal"
-
-let test_net_u_wire _ =
-  match Pre.net_u_wire with
-    | Pre.NET_TYPE_U_WIRE -> ()
-    | _ -> assert_failure "Tokens are not equal"
-
-let test_net_none _ =
-  match Pre.net_none with
-    | Pre.NET_TYPE_NONE -> ()
-    | _ -> assert_failure "Tokens are not equal"
-
-let test_net ctxt =
-  let assert_net (name, expected) =
-    name
-      |> Pre.net
-      |> assert_token_equal ~ctxt expected
-  in
-  List.iter assert_net [
-    ("wire", Pre.net_wire);
-    ("tri", Pre.net_tri);
-    ("tri0", Pre.net_tri_0);
-    ("tri1", Pre.net_tri_1);
-    ("wand", Pre.net_w_and);
-    ("triand", Pre.net_tri_and);
-    ("wor", Pre.net_w_or);
-    ("trior", Pre.net_tri_or);
-    ("trireg", Pre.net_tri_reg);
-    ("uwire", Pre.net_u_wire);
-    ("none", Pre.net_none);
-  ]
+(* Test Suite *)
 
 let suite =
   "Tokens" >::: [
@@ -502,18 +427,8 @@ let suite =
       ];
       "Generic" >:: test_dir;
     ];
-    "Net Types" >::: [
-      "Wire"    >:: test_net_wire;
-      "Tri"     >:: test_net_tri;
-      "Tri0"    >:: test_net_tri_0;
-      "Tri1"    >:: test_net_tri_1;
-      "WAnd"    >:: test_net_w_and;
-      "TriAnd"  >:: test_net_tri_and;
-      "WOr"     >:: test_net_w_or;
-      "TriOr"   >:: test_net_tri_or;
-      "TriReg"  >:: test_net_tri_reg;
-      "UWire"   >:: test_net_u_wire;
-      "None"    >:: test_net_none;
-      "Generic" >:: test_net;
+    "Generic" >::: [
+      "Numbers"     >:: test_number;
+      "Identifiers" >:: test_ident;
     ];
   ]
